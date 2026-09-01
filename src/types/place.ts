@@ -1,6 +1,5 @@
 import type { ISODateTime } from './api'
 
-/** Endpoints: /places */
 
 /** Lugar físico donde se realiza un evento. Pertenece a un usuario. */
 export interface Place {
@@ -20,7 +19,6 @@ export interface Place {
   updatedAt: ISODateTime
 }
 
-/** Body de POST /places. */
 export interface CreatePlaceDTO {
   name: string
   capacity: number
@@ -33,5 +31,4 @@ export interface CreatePlaceDTO {
   id_user: number
 }
 
-/** Body de PUT /places/:id. Todos los campos son opcionales. */
 export type UpdatePlaceDTO = Partial<CreatePlaceDTO>

@@ -1,18 +1,10 @@
 import type { ISODateTime } from './api'
 
-/** Endpoints: /events */
 
 export const EVENT_STATUSES = ['CONFIRMED', 'FINISHED', 'CANCELLED'] as const
 export type EventStatus = (typeof EVENT_STATUSES)[number]
 
-/**
- * Evento tal como lo devuelve la API.
- *
- * CUIDADO: `Event` también es un tipo global del DOM. Dentro de un archivo que
- * importe este, el nombre queda pisado por el nuestro. Si en ese mismo archivo
- * necesitás el del navegador, usá `globalThis.Event`; o importá este con alias:
- * `import type { Event as EventoApi } from '../types'`.
- */
+
 export interface Event {
   id: number
   title: string
@@ -31,7 +23,6 @@ export interface Event {
   updatedAt: ISODateTime
 }
 
-/** Body de POST /events. `status` es opcional: el backend usa CONFIRMED por defecto. */
 export interface CreateEventDTO {
   title: string
   category: string
@@ -44,5 +35,4 @@ export interface CreateEventDTO {
   id_place: number
 }
 
-/** Body de PUT /events/:id. Todos los campos son opcionales. */
 export type UpdateEventDTO = Partial<CreateEventDTO>

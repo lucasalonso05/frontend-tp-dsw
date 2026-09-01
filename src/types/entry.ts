@@ -1,6 +1,5 @@
 import type { DecimalString, ISODateTime } from './api'
 
-/** Endpoints: /entries */
 
 /**
  * Tipo de entrada de un evento (General, VIP, Early bird...).
@@ -25,8 +24,6 @@ export interface Entry {
 }
 
 /**
- * Body de POST /entries.
- *
  * `unit_price` va como number acá (así lo valida Zod en el backend), aunque
  * en las respuestas vuelva como string. No es un error: entra number, sale string.
  */
@@ -41,5 +38,4 @@ export interface CreateEntryDTO {
   id_event: number
 }
 
-/** Body de PUT /entries/:id. Todos los campos son opcionales. */
 export type UpdateEntryDTO = Partial<CreateEntryDTO>

@@ -1,7 +1,5 @@
 /**
  * Punto único de importación de los tipos del dominio.
- *
- *   import type { Event, Order, UserRole } from '../types'
  */
 
 export * from './api'
