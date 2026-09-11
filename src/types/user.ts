@@ -23,7 +23,6 @@ export interface User {
 }
 
 export interface CreateUserDTO {
-  role?: UserRole
   doc_type: string
   doc_number: string
   name: string
