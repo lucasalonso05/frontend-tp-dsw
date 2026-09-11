@@ -43,8 +43,10 @@ export interface CreateOrderItemDTO {
   quantity: number
 }
 
+/**
+ * Sin `id_user`: el backend lo toma del JWT, no del body. Mandarlo se ignora.
+ */
 export interface CreateOrderDTO {
-  id_user: number
   /** Mínimo, un ítem. */
   items: CreateOrderItemDTO[]
 }

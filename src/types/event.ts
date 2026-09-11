@@ -23,6 +23,10 @@ export interface Event {
   updatedAt: ISODateTime
 }
 
+/**
+ * Sin `id_user`: el backend toma el dueño del JWT, no del body. Mandarlo se
+ * ignora. Solo un ORGANISER (o un ADMIN) puede crear.
+ */
 export interface CreateEventDTO {
   title: string
   category: string
@@ -31,7 +35,6 @@ export interface CreateEventDTO {
   date_time_end: ISODateTime
   date_time_cancellation?: ISODateTime | null
   status?: EventStatus
-  id_user: number
   id_place: number
 }
 
