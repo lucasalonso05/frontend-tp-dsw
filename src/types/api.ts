@@ -2,6 +2,20 @@
 
 export type ISODateTime = string
 
+/**
+ * Un Decimal(10,2) de Prisma serializado como string.
+ *
+ * ⚠️ NO viene con dos decimales fijos: Prisma recorta los ceros a la derecha.
+ * La API devuelve "5000.5", "10001" y "25002.5" — no "5000.50" ni "10001.00".
+ *
+ * Consecuencias:
+ *  - Nunca mostrarlo tal cual: usar formatearPrecio() de @/lib/money.
+ *  - Nunca compararlo como string: "10001" !== "10001.00".
+ *  - Nunca sumarlo con +: es un string, "10" + "5" da "105".
+ *
+ * Es string y no number a proposito: el backend guarda dinero en Decimal
+ * exacto, y pasarlo por el punto flotante de JS seria tirar esa garantia.
+ */
 export type DecimalString = string
 
 export interface ValidationIssue {
@@ -16,4 +30,22 @@ export interface ApiError {
 
 export interface MessageResponse {
   mensaje: string
+}
+
+/**
+ * Respuesta de los listados paginados (hoy, GET /events).
+ *
+ * Ojo al cambio de forma: antes `GET /events` devolvía un array pelado y ahora
+ * devuelve este objeto. Un `.map()` directo sobre la respuesta ya no funciona:
+ * hay que entrar por `.data`.
+ */
+export interface Paginated<T> {
+  data: T[]
+  /** Página actual, empezando en 1. */
+  page: number
+  /** Tamaño de página pedido (el backend lo topea en 100). */
+  limit: number
+  /** Total de registros que matchean el filtro, no los de esta página. */
+  total: number
+  totalPages: number
 }

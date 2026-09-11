@@ -1,4 +1,5 @@
 import type { DecimalString, ISODateTime } from './api'
+import type { DigitalTicket } from './digital-ticket'
 
 
 export const ORDER_STATUSES = ['PENDING', 'PAID', 'CANCELLED', 'EXPIRED'] as const
@@ -13,6 +14,12 @@ export interface OrderItem {
   subtotal: DecimalString
   id_order: number
   id_entry: number
+  /**
+   * Tickets emitidos para este ítem. Vienen vacíos mientras la orden está
+   * PENDING y se llenan solos al pasar a PAID (el backend los emite en la
+   * misma transacción del pago).
+   */
+  tickets: DigitalTicket[]
   createdAt: ISODateTime
   updatedAt: ISODateTime
 }
@@ -43,8 +50,10 @@ export interface CreateOrderItemDTO {
   quantity: number
 }
 
+/**
+ * Sin `id_user`: el backend lo toma del JWT, no del body. Mandarlo se ignora.
+ */
 export interface CreateOrderDTO {
-  id_user: number
   /** Mínimo, un ítem. */
   items: CreateOrderItemDTO[]
 }

@@ -19,6 +19,10 @@ export interface Place {
   updatedAt: ISODateTime
 }
 
+/**
+ * Sin `id_user`: el backend toma el dueño del JWT, no del body. Mandarlo se
+ * ignora. Solo un ORGANISER (o un ADMIN) puede crear.
+ */
 export interface CreatePlaceDTO {
   name: string
   capacity: number
@@ -28,7 +32,6 @@ export interface CreatePlaceDTO {
   street: string
   street_number: string
   zip_code: string
-  id_user: number
 }
 
 export type UpdatePlaceDTO = Partial<CreatePlaceDTO>

@@ -10,8 +10,13 @@ export interface Entry {
   id: number
   entry_name: string
   entry_description: string | null
-  /** Decimal(10,2) serializado como string. Ej: "1500.00" */
+  /** Decimal(10,2) serializado como string. Ej: "1500.5" (SIN ceros de relleno). */
   unit_price: DecimalString
+  /**
+   * HORARIO DE ACCESO de este tipo de entrada, dentro del evento.
+   * Ej: "VIP: 20:00-02:00". NO es una ventana de venta: se puede comprar
+   * por anticipado. Siempre contenido en el rango del evento.
+   */
   date_time_start: ISODateTime
   date_time_end: ISODateTime
   /** Cupo fijo de este tipo de entrada. Al editar, nunca menor a sold_stock. */
@@ -32,6 +37,11 @@ export interface CreateEntryDTO {
   entry_description?: string
   /** Number con hasta 2 decimales. */
   unit_price: number
+  /**
+   * HORARIO DE ACCESO de este tipo de entrada, dentro del evento.
+   * Ej: "VIP: 20:00-02:00". NO es una ventana de venta: se puede comprar
+   * por anticipado. Siempre contenido en el rango del evento.
+   */
   date_time_start: ISODateTime
   date_time_end: ISODateTime
   stock: number
@@ -39,3 +49,13 @@ export interface CreateEntryDTO {
 }
 
 export type UpdateEntryDTO = Partial<CreateEntryDTO>
+
+/**
+ * Entrada como viene dentro de un evento: con `disponibles` ya calculado.
+ *
+ * El backend lo manda resuelto a propósito. Que cada pantalla haga
+ * `stock - sold_stock` por su cuenta es pedir que alguien se equivoque.
+ */
+export interface EntryWithAvailability extends Entry {
+  disponibles: number
+}
