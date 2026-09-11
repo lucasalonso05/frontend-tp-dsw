@@ -31,3 +31,21 @@ export interface ApiError {
 export interface MessageResponse {
   mensaje: string
 }
+
+/**
+ * Respuesta de los listados paginados (hoy, GET /events).
+ *
+ * Ojo al cambio de forma: antes `GET /events` devolvía un array pelado y ahora
+ * devuelve este objeto. Un `.map()` directo sobre la respuesta ya no funciona:
+ * hay que entrar por `.data`.
+ */
+export interface Paginated<T> {
+  data: T[]
+  /** Página actual, empezando en 1. */
+  page: number
+  /** Tamaño de página pedido (el backend lo topea en 100). */
+  limit: number
+  /** Total de registros que matchean el filtro, no los de esta página. */
+  total: number
+  totalPages: number
+}

@@ -49,3 +49,13 @@ export interface CreateEntryDTO {
 }
 
 export type UpdateEntryDTO = Partial<CreateEntryDTO>
+
+/**
+ * Entrada como viene dentro de un evento: con `disponibles` ya calculado.
+ *
+ * El backend lo manda resuelto a propósito. Que cada pantalla haga
+ * `stock - sold_stock` por su cuenta es pedir que alguien se equivoque.
+ */
+export interface EntryWithAvailability extends Entry {
+  disponibles: number
+}
