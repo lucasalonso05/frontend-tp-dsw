@@ -111,11 +111,11 @@ function EventsPage() {
 
             <div className="mt-4 flex gap-2">
               <Link
-                to={`/eventos/${event.id}/editar`}
+                to={`/eventos/${event.id}/entradas`}
                 className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
               >
-                Editar
-              </Link>
+                Entradas
+                </Link>
               {event.status !== 'CANCELLED' && (
                 <button
                   type="button"
