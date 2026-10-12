@@ -27,4 +27,9 @@ export interface CreateUserDTO {
   cuit?: string
 }
 
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  ASSISTANT: 'Asistente',
+  ORGANISER: 'Organizador',
+  ADMIN: 'Administrador',
+}
 export type UpdateUserDTO = Partial<CreateUserDTO>
