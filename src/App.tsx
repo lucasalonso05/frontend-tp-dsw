@@ -8,6 +8,8 @@ import UserFormPage from './pages/UserFormPage'
 import UsersPage from './pages/UsersPage'
 import EventFormPage from './pages/EventFormPage'
 import EventsPage from './pages/EventsPage'
+import EntriesPage from './pages/EntriesPage'
+import EntryFormPage from './pages/EntryFormPage'
 
 function App() {
   return (
@@ -24,6 +26,9 @@ function App() {
         <Route path="/eventos" element={<EventsPage />} />
         <Route path="/eventos/nuevo" element={<EventFormPage />} />
         <Route path="/eventos/:id/editar" element={<EventFormPage />} />
+        <Route path="/eventos/:id/entradas" element={<EntriesPage />} />
+        <Route path="/eventos/:id/entradas/nueva" element={<EntryFormPage />} />
+        <Route path="/eventos/:id/entradas/:entryId/editar" element={<EntryFormPage />} />
       </Route>
     </Routes>
   )
