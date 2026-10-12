@@ -6,6 +6,8 @@ import NotFoundPage from './pages/NotFoundPage'
 import PlaceFormPage from './pages/PlaceFormPage.tsx'
 import UserFormPage from './pages/UserFormPage'
 import UsersPage from './pages/UsersPage'
+import EventFormPage from './pages/EventFormPage'
+import EventsPage from './pages/EventsPage'
 
 function App() {
   return (
@@ -19,6 +21,9 @@ function App() {
         <Route path="/personas" element={<UsersPage />} />
         <Route path="/personas/nueva" element={<UserFormPage />} />
         <Route path="/personas/:id/editar" element={<UserFormPage />} />
+        <Route path="/eventos" element={<EventsPage />} />
+        <Route path="/eventos/nuevo" element={<EventFormPage />} />
+        <Route path="/eventos/:id/editar" element={<EventFormPage />} />
       </Route>
     </Routes>
   )

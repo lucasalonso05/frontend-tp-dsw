@@ -3,7 +3,7 @@ interface TextFieldProps {
   name: string
   value: string
   onChange: (name: string, value: string) => void
-  type?: 'text' | 'number' | 'email' | 'password' | 'tel'
+  type?: 'text' | 'number' | 'email' | 'password' | 'tel' | 'datetime-local'  
   error?: string
   required?: boolean
 }
