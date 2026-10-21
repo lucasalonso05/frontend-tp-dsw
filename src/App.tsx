@@ -11,6 +11,7 @@ import EventsPage from './pages/EventsPage'
 import EntriesPage from './pages/EntriesPage'
 import EntryFormPage from './pages/EntryFormPage'
 import EventDetailPage from './pages/EventDetailPage'
+import LoginPage from './pages/LoginPage'
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Route path="/eventos/:id/entradas/nueva" element={<EntryFormPage />} />
         <Route path="/eventos/:id/entradas/:entryId/editar" element={<EntryFormPage />} />
         <Route path="/eventos/:id" element={<EventDetailPage />} />
+        <Route path="/ingresar" element={<LoginPage />} />
       </Route>
     </Routes>
   )
