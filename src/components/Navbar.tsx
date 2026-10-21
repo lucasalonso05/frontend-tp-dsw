@@ -1,18 +1,35 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { USER_ROLE_LABELS } from '../types/user'
+import type { UserRole } from '../types/user'
 
-const links = [
+interface NavItem {
+  to: string
+  label: string
+  /** Si se indica, el enlace solo lo ven estos roles. Sin roles, lo ven todos. */
+  roles?: UserRole[]
+}
+
+const links: NavItem[] = [
   { to: '/', label: 'Cartelera' },
-  { to: '/eventos', label: 'Eventos' },
-  { to: '/lugares', label: 'Lugares' },
-  { to: '/personas', label: 'Personas' },
+  { to: '/eventos', label: 'Eventos', roles: ['ORGANISER', 'ADMIN'] },
+  { to: '/lugares', label: 'Lugares', roles: ['ORGANISER', 'ADMIN'] },
+  { to: '/personas', label: 'Personas', roles: ['ADMIN'] },
 ]
+
+const linkClass = ({ isActive }: { isActive: boolean }) =>
+  `block rounded px-2 py-2 ${isActive ? 'font-semibold text-blue-600' : 'text-slate-700 hover:text-blue-600'}`
 
 function Navbar() {
   const [open, setOpen] = useState(false)
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+
+  // Cada usuario ve solo los enlaces de su rol.
+  const visibleLinks = links.filter(
+    (link) => !link.roles || (user !== null && link.roles.includes(user.role)),
+  )
 
   const handleLogout = () => {
     logout()
@@ -41,15 +58,13 @@ function Navbar() {
           id="menu"
           className={`${open ? 'flex' : 'hidden'} w-full flex-col gap-1 pt-4 md:flex md:w-auto md:flex-row md:items-center md:gap-6 md:pt-0`}
         >
-          {links.map((link) => (
+          {visibleLinks.map((link) => (
             <li key={link.to}>
               <NavLink
                 to={link.to}
                 end={link.to === '/'}
                 onClick={() => setOpen(false)}
-                className={({ isActive }) =>
-                  `block rounded px-2 py-2 ${isActive ? 'font-semibold text-blue-600' : 'text-slate-700 hover:text-blue-600'}`
-                }
+                className={linkClass}
               >
                 {link.label}
               </NavLink>
@@ -61,6 +76,9 @@ function Navbar() {
               <div className="flex items-center justify-between gap-3 px-2 py-2">
                 <span className="text-sm text-slate-600">
                   {user.name} {user.surname}
+                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs">
+                    {USER_ROLE_LABELS[user.role]}
+                  </span>
                 </span>
                 <button
                   type="button"
@@ -71,13 +89,18 @@ function Navbar() {
                 </button>
               </div>
             ) : (
-              <NavLink
-                to="/ingresar"
-                onClick={() => setOpen(false)}
-                className="block rounded px-2 py-2 font-semibold text-blue-600 hover:underline"
-              >
-                Ingresar
-              </NavLink>
+              <div className="flex items-center gap-2">
+                <NavLink to="/ingresar" onClick={() => setOpen(false)} className={linkClass}>
+                  Ingresar
+                </NavLink>
+                <NavLink
+                  to="/registrarse"
+                  onClick={() => setOpen(false)}
+                  className="block rounded bg-blue-600 px-3 py-2 text-white hover:bg-blue-700"
+                >
+                  Registrarse
+                </NavLink>
+              </div>
             )}
           </li>
         </ul>

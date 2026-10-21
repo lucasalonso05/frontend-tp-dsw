@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
 import TextField from '../components/TextField'
 import { useAuth } from '../hooks/useAuth'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 function LoginPage() {
   const { login } = useAuth()
@@ -75,6 +75,12 @@ function LoginPage() {
           {sending ? 'Ingresando…' : 'Ingresar'}
         </button>
       </form>
+            <p className="mt-4 text-center text-sm text-slate-600">
+        ¿No tenés cuenta?{' '}
+        <Link to="/registrarse" className="text-blue-600 hover:underline">
+          Registrate
+        </Link>
+      </p>
     </section>
   )
 }
