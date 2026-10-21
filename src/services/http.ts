@@ -1,4 +1,5 @@
 import type { ApiErrorBody, ValidationIssue } from '../types/api'
+import { clearSession, loadSession, SESSION_EXPIRED } from './sessionStore'
 
 /** Error de una llamada al backend, con un mensaje listo para mostrar. */
 export class ApiError extends Error {
@@ -48,12 +49,18 @@ class HttpClient {
     return this.request<T>('DELETE', path)
   }
 
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    // Si hay una sesión iniciada, cada pedido lleva su token.
+    const token = loadSession()?.token
+    const headers: Record<string, string> = {}
+    if (body !== undefined) headers['Content-Type'] = 'application/json'
+    if (token) headers.Authorization = `Bearer ${token}`
+
     let response: Response
     try {
       response = await fetch(`${this.baseUrl}${path}`, {
         method,
-        headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+        headers,
         body: body === undefined ? undefined : JSON.stringify(body),
       })
     } catch {
@@ -62,6 +69,13 @@ class HttpClient {
 
     const data: unknown = await response.json().catch(() => null)
 
+    if (response.status === 401 && token) {
+      // El backend rechazó el token (por ejemplo, porque venció): se cierra la sesión.
+      clearSession()
+      window.dispatchEvent(new Event(SESSION_EXPIRED))
+      throw new ApiError('Tu sesión venció. Volvé a iniciar sesión.', 401)
+    }
+
     if (!response.ok) {
       throw toApiError(response.status, data)
     }
@@ -69,5 +83,4 @@ class HttpClient {
     return data as T
   }
 }
-
 export const http = new HttpClient(import.meta.env.VITE_API_URL)

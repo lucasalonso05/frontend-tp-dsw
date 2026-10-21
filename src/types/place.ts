@@ -24,7 +24,7 @@ export interface CreatePlaceDTO {
   street: string
   street_number: string
   zip_code: string
-  id_user: number
+  id_user?: number
 }
 
 export type UpdatePlaceDTO = Partial<CreatePlaceDTO>

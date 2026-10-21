@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 import { entryService } from '../services/entryService'
 import { eventService } from '../services/eventService'
 import type { Entry } from '../types/entry'
 import type { EventModel } from '../types/event'
 import { formatDateTime } from '../utils/dates'
 import { formatPrice } from '../utils/money'
+import { canManage } from '../utils/permissions'
+import ForbiddenPage from './ForbiddenPage'
 
 function EntriesPage() {
   const { id } = useParams()
   const eventId = Number(id)
+  const { user } = useAuth()
 
   const [event, setEvent] = useState<EventModel | null>(null)
   const [entries, setEntries] = useState<Entry[]>([])
@@ -49,6 +53,8 @@ function EntriesPage() {
     }
   }
 
+    // Un organizador no puede gestionar las entradas del evento de otro.
+  if (event && !canManage(user, event.id_user)) return <ForbiddenPage />
   const assigned = entries.reduce((sum, entry) => sum + entry.stock, 0)
   const unassigned = event ? event.total_stock - assigned : 0
   const sortedEntries = [...entries].sort((a, b) => Number(a.unit_price) - Number(b.unit_price))

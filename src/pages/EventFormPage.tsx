@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import SelectField from '../components/SelectField'
 import TextField from '../components/TextField'
+import { useAuth } from '../hooks/useAuth'
 import { eventService } from '../services/eventService'
 import { placeService } from '../services/placeService'
 import { userService } from '../services/userService'
@@ -10,6 +11,8 @@ import type { CreateEventDTO, EventModel, EventStatus } from '../types/event'
 import type { Place } from '../types/place'
 import type { User } from '../types/user'
 import { toDateTimeInput, toISO } from '../utils/dates'
+import { canManage } from '../utils/permissions'
+import ForbiddenPage from './ForbiddenPage'
 
 interface EventFormValues {
   title: string
@@ -49,13 +52,18 @@ const emptyValues: EventFormValues = {
   status: 'CONFIRMED',
 }
 
-function validate(values: EventFormValues, place: Place | undefined): EventFormErrors {
+function validate(
+  values: EventFormValues,
+  place: Place | undefined,
+  isAdmin: boolean,
+): EventFormErrors {
   const errors: EventFormErrors = {}
 
   if (values.title.trim() === '') errors.title = 'Este campo es obligatorio'
   if (values.category.trim() === '') errors.category = 'Este campo es obligatorio'
   if (values.id_place === '') errors.id_place = 'Elegí un lugar'
-  if (values.id_user === '') errors.id_user = 'Elegí un organizador'
+  // Solo el admin elige organizador; para un organizador, es él mismo.
+  if (isAdmin && values.id_user === '') errors.id_user = 'Elegí un organizador'
 
   const stock = Number(values.total_stock)
   if (!Number.isInteger(stock) || stock <= 0) {
@@ -74,7 +82,11 @@ function validate(values: EventFormValues, place: Place | undefined): EventFormE
   return errors
 }
 
-function toDTO(values: EventFormValues, original: EventModel | null): CreateEventDTO {
+function toDTO(
+  values: EventFormValues,
+  original: EventModel | null,
+  isAdmin: boolean,
+): CreateEventDTO {
   const status = values.status as EventStatus
   const dto: CreateEventDTO = {
     title: values.title.trim(),
@@ -84,8 +96,10 @@ function toDTO(values: EventFormValues, original: EventModel | null): CreateEven
     date_time_end: toISO(values.date_time_end),
     status,
     id_place: Number(values.id_place),
-    id_user: Number(values.id_user),
   }
+
+  // El organizador lo elige solo un admin; si no, el backend usa a quien inició sesión.
+  if (isAdmin) dto.id_user = Number(values.id_user)
 
   // Si se cancela desde el formulario, se registra el momento de la cancelación.
   if (status === 'CANCELLED' && original?.status !== 'CANCELLED') {
@@ -100,6 +114,8 @@ function EventFormPage() {
   const eventId = id === undefined ? null : Number(id)
   const isEdit = eventId !== null
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
 
   const [values, setValues] = useState<EventFormValues>(emptyValues)
   const [errors, setErrors] = useState<EventFormErrors>({})
@@ -115,13 +131,14 @@ function EventFormPage() {
 
     Promise.all([
       placeService.getAll(),
-      userService.getAll(),
+      // La lista de usuarios solo la puede pedir un admin, y solo él la necesita.
+      isAdmin ? userService.getAll() : null,
       eventId === null ? null : eventService.getById(eventId),
     ])
       .then(([placeList, users, event]) => {
         if (ignore) return
         setPlaces(placeList)
-        setOrganisers(users.filter((user) => user.role === 'ORGANISER'))
+        setOrganisers((users ?? []).filter((item) => item.role === 'ORGANISER'))
         if (event) {
           setOriginal(event)
           setValues({
@@ -146,7 +163,7 @@ function EventFormPage() {
     return () => {
       ignore = true
     }
-  }, [eventId])
+  }, [eventId, isAdmin])
 
   const handleChange = (name: string, value: string) => {
     setValues({ ...values, [name]: value })
@@ -154,14 +171,14 @@ function EventFormPage() {
 
   const save = async () => {
     const selectedPlace = places.find((place) => place.id === Number(values.id_place))
-    const validationErrors = validate(values, selectedPlace)
+    const validationErrors = validate(values, selectedPlace, isAdmin)
     setErrors(validationErrors)
     if (Object.keys(validationErrors).length > 0) return
 
     setSaving(true)
     setApiError(null)
     try {
-      const dto = toDTO(values, original)
+      const dto = toDTO(values, original, isAdmin)
       if (eventId === null) {
         await eventService.create(dto)
       } else {
@@ -175,6 +192,9 @@ function EventFormPage() {
   }
 
   if (loading) return <p className="text-slate-600">Cargando…</p>
+
+  // Un organizador no puede editar el evento de otro.
+  if (original && !canManage(user, original.id_user)) return <ForbiddenPage />
 
   const fields: FieldConfig[] = [
     { name: 'title', label: 'Título', wide: true },
@@ -191,16 +211,19 @@ function EventFormPage() {
         label: `${place.name} (${place.city}), hasta ${place.capacity} personas`,
       })),
     },
-    {
+  ]
+
+  if (isAdmin) {
+    fields.push({
       name: 'id_user',
       label: 'Organizador',
       placeholder: 'Elegí un organizador',
-      options: organisers.map((user) => ({
-        value: String(user.id),
-        label: `${user.name} ${user.surname}`,
+      options: organisers.map((item) => ({
+        value: String(item.id),
+        label: `${item.name} ${item.surname}`,
       })),
-    },
-  ]
+    })
+  }
 
   if (isEdit) fields.push({ name: 'status', label: 'Estado', options: statusOptions })
 
