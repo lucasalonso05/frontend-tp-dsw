@@ -4,29 +4,25 @@ import EventStatusBadge from '../components/EventStatusBadge'
 import { entryService } from '../services/entryService'
 import { eventService } from '../services/eventService'
 import { placeService } from '../services/placeService'
-import { userService } from '../services/userService'
 import type { Entry } from '../types/entry'
 import type { EventModel } from '../types/event'
 import type { Place } from '../types/place'
-import type { User } from '../types/user'
 import { formatDateTime } from '../utils/dates'
 import { formatPrice } from '../utils/money'
 
 interface EventDetail {
   event: EventModel
   place: Place
-  organiser: User
   entries: Entry[]
 }
 
 async function loadDetail(eventId: number): Promise<EventDetail> {
   const event = await eventService.getById(eventId)
-  const [place, organiser, entries] = await Promise.all([
+  const [place, entries] = await Promise.all([
     placeService.getById(event.id_place),
-    userService.getById(event.id_user),
     entryService.getByEvent(eventId),
   ])
-  return { event, place, organiser, entries }
+  return { event, place, entries }
 }
 
 function EventDetailPage() {
@@ -71,7 +67,7 @@ function EventDetailPage() {
     )
   }
 
-  const { event, place, organiser, entries } = detail
+  const { event, place, entries } = detail
   const sortedEntries = [...entries].sort((a, b) => Number(a.unit_price) - Number(b.unit_price))
 
   return (
@@ -117,7 +113,7 @@ function EventDetailPage() {
           <div className="rounded-lg border border-slate-200 bg-white p-4">
             <h2 className="font-semibold">Organiza</h2>
             <p className="mt-1 text-sm">
-              {organiser.name} {organiser.surname}
+            {event.FK_user.name} {event.FK_user.surname}
             </p>
           </div>
         </div>

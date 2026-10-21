@@ -1,36 +1,31 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import EventStatusBadge from '../components/EventStatusBadge'
+import { useAuth } from '../hooks/useAuth'
 import { eventService } from '../services/eventService'
 import { placeService } from '../services/placeService'
-import { userService } from '../services/userService'
-import { EVENT_STATUS_LABELS } from '../types/event'
-import type { EventModel, EventStatus } from '../types/event'
+import type { EventModel } from '../types/event'
 import type { Place } from '../types/place'
-import type { User } from '../types/user'
 import { formatDateTime } from '../utils/dates'
-
-const statusClasses: Record<EventStatus, string> = {
-  CONFIRMED: 'bg-green-100 text-green-800',
-  FINISHED: 'bg-slate-200 text-slate-700',
-  CANCELLED: 'bg-red-100 text-red-800',
-}
+import { canManage } from '../utils/permissions'
 
 function EventsPage() {
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
+
   const [events, setEvents] = useState<EventModel[]>([])
   const [places, setPlaces] = useState<Place[]>([])
-  const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let ignore = false
 
-    Promise.all([eventService.getAll(), placeService.getAll(), userService.getAll()])
-      .then(([eventList, placeList, userList]) => {
+    Promise.all([eventService.getAll(), placeService.getAll()])
+      .then(([eventList, placeList]) => {
         if (ignore) return
         setEvents(eventList)
         setPlaces(placeList)
-        setUsers(userList)
       })
       .catch((err: Error) => {
         if (!ignore) setError(err.message)
@@ -59,19 +54,17 @@ function EventsPage() {
   const placeName = (id: number) =>
     places.find((place) => place.id === id)?.name ?? 'Lugar no disponible'
 
-  const organiserName = (id: number) => {
-    const user = users.find((item) => item.id === id)
-    return user ? `${user.name} ${user.surname}` : 'Organizador no disponible'
-  }
-
-  const sortedEvents = [...events].sort((a, b) =>
-    a.date_time_start.localeCompare(b.date_time_start),
-  )
+  // Un organizador ve solo sus eventos; un admin, todos.
+  const visibleEvents = events
+    .filter((event) => canManage(user, event.id_user))
+    .sort((a, b) => a.date_time_start.localeCompare(b.date_time_start))
 
   return (
     <section>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold md:text-3xl">Gestión de eventos</h1>
+        <h1 className="text-2xl font-bold md:text-3xl">
+          {isAdmin ? 'Gestión de eventos' : 'Mis eventos'}
+        </h1>
         <Link
           to="/eventos/nuevo"
           className="rounded bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700"
@@ -88,34 +81,44 @@ function EventsPage() {
         </p>
       )}
 
-      {!loading && !error && sortedEvents.length === 0 && (
-        <p className="mt-4 text-slate-600">Todavía no hay eventos cargados.</p>
+      {!loading && !error && visibleEvents.length === 0 && (
+        <p className="mt-4 text-slate-600">
+          {isAdmin ? 'Todavía no hay eventos cargados.' : 'Todavía no creaste ningún evento.'}
+        </p>
       )}
 
       <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {sortedEvents.map((event) => (
+        {visibleEvents.map((event) => (
           <li key={event.id} className="flex flex-col rounded-lg border border-slate-200 bg-white p-4">
             <div className="flex items-start justify-between gap-2">
               <h2 className="font-semibold">{event.title}</h2>
-              <span className={`rounded-full px-2 py-0.5 text-xs ${statusClasses[event.status]}`}>
-                {EVENT_STATUS_LABELS[event.status]}
-              </span>
+              <EventStatusBadge status={event.status} />
             </div>
             <p className="text-sm text-slate-600">{event.category}</p>
             <p className="mt-2 text-sm">
               {formatDateTime(event.date_time_start)} a {formatDateTime(event.date_time_end)}
             </p>
             <p className="text-sm text-slate-600">{placeName(event.id_place)}</p>
-            <p className="text-sm text-slate-600">Organiza: {organiserName(event.id_user)}</p>
+            {isAdmin && (
+              <p className="text-sm text-slate-600">
+                Organiza: {event.FK_user.name} {event.FK_user.surname}
+              </p>
+            )}
             <p className="mt-2 text-sm">Stock total: {event.total_stock} entradas</p>
 
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                to={`/eventos/${event.id}/editar`}
+                className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
+              >
+                Editar
+              </Link>
               <Link
                 to={`/eventos/${event.id}/entradas`}
                 className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
               >
                 Entradas
-                </Link>
+              </Link>
               {event.status !== 'CANCELLED' && (
                 <button
                   type="button"

@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import TextField from '../components/TextField'
+import { useAuth } from '../hooks/useAuth'
 import { entryService } from '../services/entryService'
 import { eventService } from '../services/eventService'
 import type { CreateEntryDTO, Entry } from '../types/entry'
 import type { EventModel } from '../types/event'
 import { toDateTimeInput, toISO } from '../utils/dates'
+import { canManage } from '../utils/permissions'
+import ForbiddenPage from './ForbiddenPage'
 
 interface EntryFormValues {
   entry_name: string
@@ -102,6 +105,7 @@ function toDTO(values: EntryFormValues, idEvent: number): CreateEntryDTO {
 function EntryFormPage() {
   const params = useParams()
   const eventId = Number(params.id)
+  const { user } = useAuth()
   const entryId = params.entryId === undefined ? null : Number(params.entryId)
   const navigate = useNavigate()
   const listPath = `/eventos/${eventId}/entradas`
@@ -187,6 +191,9 @@ function EntryFormPage() {
   }
 
   if (loading) return <p className="text-slate-600">Cargando…</p>
+
+    // Un organizador no puede gestionar las entradas del evento de otro.
+  if (event && !canManage(user, event.id_user)) return <ForbiddenPage />
 
   if (!event || (entryId !== null && !current)) {
     return (

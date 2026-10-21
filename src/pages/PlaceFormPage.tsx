@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import SelectField from '../components/SelectField'
 import TextField from '../components/TextField'
+import { useAuth } from '../hooks/useAuth'
 import { placeService } from '../services/placeService'
 import { userService } from '../services/userService'
 import type { CreatePlaceDTO } from '../types/place'
 import type { User } from '../types/user'
+import { canManage } from '../utils/permissions'
+import ForbiddenPage from './ForbiddenPage'
 
 interface PlaceFormValues {
   name: string
@@ -51,7 +55,7 @@ const emptyValues: PlaceFormValues = {
   id_user: '',
 }
 
-function validate(values: PlaceFormValues): PlaceFormErrors {
+function validate(values: PlaceFormValues, isAdmin: boolean): PlaceFormErrors {
   const errors: PlaceFormErrors = {}
   const requiredFields: (keyof PlaceFormValues)[] = [
     'name',
@@ -71,13 +75,14 @@ function validate(values: PlaceFormValues): PlaceFormErrors {
     errors.capacity = 'Ingresá un número entero mayor a 0'
   }
 
-  if (values.id_user === '') errors.id_user = 'Elegí un organizador'
+  // Solo el admin elige organizador; para un organizador, es él mismo.
+  if (isAdmin && values.id_user === '') errors.id_user = 'Elegí un organizador'
 
   return errors
 }
 
-function toDTO(values: PlaceFormValues): CreatePlaceDTO {
-  return {
+function toDTO(values: PlaceFormValues, isAdmin: boolean): CreatePlaceDTO {
+  const dto: CreatePlaceDTO = {
     name: values.name.trim(),
     capacity: Number(values.capacity),
     description: values.description.trim(),
@@ -86,18 +91,25 @@ function toDTO(values: PlaceFormValues): CreatePlaceDTO {
     street: values.street.trim(),
     street_number: values.street_number.trim(),
     zip_code: values.zip_code.trim(),
-    id_user: Number(values.id_user),
   }
+
+  // El dueño lo elige solo un admin; si no, el backend usa a quien inició sesión.
+  if (isAdmin) dto.id_user = Number(values.id_user)
+
+  return dto
 }
 
 function PlaceFormPage() {
   const { id } = useParams()
   const placeId = id === undefined ? null : Number(id)
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
 
   const [values, setValues] = useState<PlaceFormValues>(emptyValues)
   const [errors, setErrors] = useState<PlaceFormErrors>({})
   const [organisers, setOrganisers] = useState<User[]>([])
+  const [ownerId, setOwnerId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
@@ -106,13 +118,15 @@ function PlaceFormPage() {
     let ignore = false
 
     Promise.all([
-      userService.getAll(),
+      // La lista de usuarios solo la puede pedir un admin, y solo él la necesita.
+      isAdmin ? userService.getAll() : null,
       placeId === null ? null : placeService.getById(placeId),
     ])
       .then(([users, place]) => {
         if (ignore) return
-        setOrganisers(users.filter((user) => user.role === 'ORGANISER'))
+        setOrganisers((users ?? []).filter((item) => item.role === 'ORGANISER'))
         if (place) {
+          setOwnerId(place.id_user)
           setValues({
             name: place.name,
             capacity: String(place.capacity),
@@ -136,14 +150,14 @@ function PlaceFormPage() {
     return () => {
       ignore = true
     }
-  }, [placeId])
+  }, [placeId, isAdmin])
 
   const handleChange = (name: string, value: string) => {
     setValues({ ...values, [name]: value })
   }
 
   const save = async () => {
-    const validationErrors = validate(values)
+    const validationErrors = validate(values, isAdmin)
     setErrors(validationErrors)
     if (Object.keys(validationErrors).length > 0) return
 
@@ -151,9 +165,9 @@ function PlaceFormPage() {
     setApiError(null)
     try {
       if (placeId === null) {
-        await placeService.create(toDTO(values))
+        await placeService.create(toDTO(values, isAdmin))
       } else {
-        await placeService.update(placeId, toDTO(values))
+        await placeService.update(placeId, toDTO(values, isAdmin))
       }
       navigate('/lugares')
     } catch (err) {
@@ -163,6 +177,9 @@ function PlaceFormPage() {
   }
 
   if (loading) return <p className="text-slate-600">Cargando…</p>
+
+  // Un organizador no puede editar el lugar de otro.
+  if (ownerId !== null && !canManage(user, ownerId)) return <ForbiddenPage />
 
   return (
     <section className="mx-auto max-w-2xl">
@@ -198,25 +215,23 @@ function PlaceFormPage() {
           </div>
         ))}
 
-        <div className="sm:col-span-2">
-          <label htmlFor="id_user" className="block text-sm font-medium text-slate-700">
-            Organizador<span className="text-red-600"> *</span>
-          </label>
-          <select
-            id="id_user"
-            value={values.id_user}
-            onChange={(event) => handleChange('id_user', event.target.value)}
-            className={`mt-1 w-full rounded border bg-white px-3 py-2 ${errors.id_user ? 'border-red-500' : 'border-slate-300'}`}
-          >
-            <option value="">Elegí un organizador</option>
-            {organisers.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.name} {user.surname}
-              </option>
-            ))}
-          </select>
-          {errors.id_user && <p className="mt-1 text-sm text-red-600">{errors.id_user}</p>}
-        </div>
+        {isAdmin && (
+          <div className="sm:col-span-2">
+            <SelectField
+              label="Organizador"
+              name="id_user"
+              value={values.id_user}
+              placeholder="Elegí un organizador"
+              options={organisers.map((item) => ({
+                value: String(item.id),
+                label: `${item.name} ${item.surname}`,
+              }))}
+              error={errors.id_user}
+              required
+              onChange={handleChange}
+            />
+          </div>
+        )}
 
         <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
           <Link to="/lugares" className="rounded border border-slate-300 px-4 py-2 text-center">

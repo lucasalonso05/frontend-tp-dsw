@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 import { placeService } from '../services/placeService'
 import type { Place } from '../types/place'
+import { canManage } from '../utils/permissions'
 
 function PlacesPage() {
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
+
   const [places, setPlaces] = useState<Place[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -40,10 +45,13 @@ function PlacesPage() {
     }
   }
 
+  // Un organizador ve solo sus lugares; un admin, todos.
+  const visiblePlaces = places.filter((place) => canManage(user, place.id_user))
+
   return (
     <section>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold md:text-3xl">Lugares</h1>
+        <h1 className="text-2xl font-bold md:text-3xl">{isAdmin ? 'Lugares' : 'Mis lugares'}</h1>
         <Link
           to="/lugares/nuevo"
           className="rounded bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700"
@@ -60,12 +68,14 @@ function PlacesPage() {
         </p>
       )}
 
-      {!loading && !error && places.length === 0 && (
-        <p className="mt-4 text-slate-600">Todavía no hay lugares cargados.</p>
+      {!loading && !error && visiblePlaces.length === 0 && (
+        <p className="mt-4 text-slate-600">
+          {isAdmin ? 'Todavía no hay lugares cargados.' : 'Todavía no cargaste ningún lugar.'}
+        </p>
       )}
 
       <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {places.map((place) => (
+        {visiblePlaces.map((place) => (
           <li key={place.id} className="flex flex-col rounded-lg border border-slate-200 bg-white p-4">
             <h2 className="font-semibold">{place.name}</h2>
             <p className="text-sm text-slate-600">
