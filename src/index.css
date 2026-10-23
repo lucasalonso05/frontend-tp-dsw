@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* IBM Plex Sans pasa a ser la fuente de todo el sitio. */
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Fondo y color de texto de todas las pantallas. */
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
