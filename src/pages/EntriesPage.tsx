@@ -1,63 +1,63 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { entryService } from '../services/entryService'
-import { eventService } from '../services/eventService'
-import type { Entry } from '../types/entry'
-import type { EventModel } from '../types/event'
-import { formatDateTime } from '../utils/dates'
-import { formatPrice } from '../utils/money'
-import { canManage } from '../utils/permissions'
-import ForbiddenPage from './ForbiddenPage'
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { entryService } from '../services/entryService';
+import { eventService } from '../services/eventService';
+import type { Entry } from '../types/entry';
+import type { EventModel } from '../types/event';
+import { formatDateTime } from '../utils/dates';
+import { formatPrice } from '../utils/money';
+import { canManage } from '../utils/permissions';
+import ForbiddenPage from './ForbiddenPage';
 
 function EntriesPage() {
-  const { id } = useParams()
-  const eventId = Number(id)
-  const { user } = useAuth()
+  const { id } = useParams();
+  const eventId = Number(id);
+  const { user } = useAuth();
 
-  const [event, setEvent] = useState<EventModel | null>(null)
-  const [entries, setEntries] = useState<Entry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [event, setEvent] = useState<EventModel | null>(null);
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let ignore = false
+    let ignore = false;
 
     Promise.all([eventService.getById(eventId), entryService.getByEvent(eventId)])
       .then(([eventData, entryList]) => {
-        if (ignore) return
-        setEvent(eventData)
-        setEntries(entryList)
+        if (ignore) return;
+        setEvent(eventData);
+        setEntries(entryList);
       })
       .catch((err: Error) => {
-        if (!ignore) setError(err.message)
+        if (!ignore) setError(err.message);
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
-      })
+        if (!ignore) setLoading(false);
+      });
 
     return () => {
-      ignore = true
-    }
-  }, [eventId])
+      ignore = true;
+    };
+  }, [eventId]);
 
   const handleDelete = async (entry: Entry) => {
-    if (!window.confirm(`¿Eliminar la entrada "${entry.entry_name}"?`)) return
+    if (!window.confirm(`¿Eliminar la entrada "${entry.entry_name}"?`)) return;
 
-    setError(null)
+    setError(null);
     try {
-      await entryService.remove(entry.id)
-      setEntries(entries.filter((item) => item.id !== entry.id))
+      await entryService.remove(entry.id);
+      setEntries(entries.filter((item) => item.id !== entry.id));
     } catch {
-      setError('No se pudo eliminar la entrada. Si ya tiene ventas, no se puede borrar.')
+      setError('No se pudo eliminar la entrada. Si ya tiene ventas, no se puede borrar.');
     }
-  }
+  };
 
-    // Un organizador no puede gestionar las entradas del evento de otro.
-  if (event && !canManage(user, event.id_user)) return <ForbiddenPage />
-  const assigned = entries.reduce((sum, entry) => sum + entry.stock, 0)
-  const unassigned = event ? event.total_stock - assigned : 0
-  const sortedEntries = [...entries].sort((a, b) => Number(a.unit_price) - Number(b.unit_price))
+  // Un organizador no puede gestionar las entradas del evento de otro.
+  if (event && !canManage(user, event.id_user)) return <ForbiddenPage />;
+  const assigned = entries.reduce((sum, entry) => sum + entry.stock, 0);
+  const unassigned = event ? event.total_stock - assigned : 0;
+  const sortedEntries = [...entries].sort((a, b) => Number(a.unit_price) - Number(b.unit_price));
 
   return (
     <section>
@@ -133,7 +133,7 @@ function EntriesPage() {
         ))}
       </ul>
     </section>
-  )
+  );
 }
 
-export default EntriesPage
+export default EntriesPage;

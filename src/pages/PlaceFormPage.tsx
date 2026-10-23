@@ -1,35 +1,35 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import SelectField from '../components/SelectField'
-import TextField from '../components/TextField'
-import { useAuth } from '../hooks/useAuth'
-import { placeService } from '../services/placeService'
-import { userService } from '../services/userService'
-import type { CreatePlaceDTO } from '../types/place'
-import type { User } from '../types/user'
-import { canManage } from '../utils/permissions'
-import ForbiddenPage from './ForbiddenPage'
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import SelectField from '../components/SelectField';
+import TextField from '../components/TextField';
+import { useAuth } from '../hooks/useAuth';
+import { placeService } from '../services/placeService';
+import { userService } from '../services/userService';
+import type { CreatePlaceDTO } from '../types/place';
+import type { User } from '../types/user';
+import { canManage } from '../utils/permissions';
+import ForbiddenPage from './ForbiddenPage';
 
 interface PlaceFormValues {
-  name: string
-  capacity: string
-  description: string
-  province: string
-  city: string
-  street: string
-  street_number: string
-  zip_code: string
-  id_user: string
+  name: string;
+  capacity: string;
+  description: string;
+  province: string;
+  city: string;
+  street: string;
+  street_number: string;
+  zip_code: string;
+  id_user: string;
 }
 
-type PlaceFormErrors = Partial<Record<keyof PlaceFormValues, string>>
+type PlaceFormErrors = Partial<Record<keyof PlaceFormValues, string>>;
 
 interface FieldConfig {
-  name: keyof PlaceFormValues
-  label: string
-  type?: 'text' | 'number'
-  wide?: boolean
-  optional?: boolean
+  name: keyof PlaceFormValues;
+  label: string;
+  type?: 'text' | 'number';
+  wide?: boolean;
+  optional?: boolean;
 }
 
 const fields: FieldConfig[] = [
@@ -40,8 +40,10 @@ const fields: FieldConfig[] = [
   { name: 'province', label: 'Provincia' },
   { name: 'zip_code', label: 'Código postal' },
   { name: 'capacity', label: 'Capacidad máxima', type: 'number' },
-  { name: 'description', label: 'Descripción', wide: true, optional: true },
-]
+  {
+    name: 'description', label: 'Descripción', wide: true, optional: true,
+  },
+];
 
 const emptyValues: PlaceFormValues = {
   name: '',
@@ -53,10 +55,10 @@ const emptyValues: PlaceFormValues = {
   street_number: '',
   zip_code: '',
   id_user: '',
-}
+};
 
 function validate(values: PlaceFormValues, isAdmin: boolean): PlaceFormErrors {
-  const errors: PlaceFormErrors = {}
+  const errors: PlaceFormErrors = {};
   const requiredFields: (keyof PlaceFormValues)[] = [
     'name',
     'street',
@@ -64,21 +66,21 @@ function validate(values: PlaceFormValues, isAdmin: boolean): PlaceFormErrors {
     'city',
     'province',
     'zip_code',
-  ]
+  ];
 
   requiredFields.forEach((field) => {
-    if (values[field].trim() === '') errors[field] = 'Este campo es obligatorio'
-  })
+    if (values[field].trim() === '') errors[field] = 'Este campo es obligatorio';
+  });
 
-  const capacity = Number(values.capacity)
+  const capacity = Number(values.capacity);
   if (!Number.isInteger(capacity) || capacity <= 0) {
-    errors.capacity = 'Ingresá un número entero mayor a 0'
+    errors.capacity = 'Ingresá un número entero mayor a 0';
   }
 
   // Solo el admin elige organizador; para un organizador, es él mismo.
-  if (isAdmin && values.id_user === '') errors.id_user = 'Elegí un organizador'
+  if (isAdmin && values.id_user === '') errors.id_user = 'Elegí un organizador';
 
-  return errors
+  return errors;
 }
 
 function toDTO(values: PlaceFormValues, isAdmin: boolean): CreatePlaceDTO {
@@ -91,31 +93,31 @@ function toDTO(values: PlaceFormValues, isAdmin: boolean): CreatePlaceDTO {
     street: values.street.trim(),
     street_number: values.street_number.trim(),
     zip_code: values.zip_code.trim(),
-  }
+  };
 
   // El dueño lo elige solo un admin; si no, el backend usa a quien inició sesión.
-  if (isAdmin) dto.id_user = Number(values.id_user)
+  if (isAdmin) dto.id_user = Number(values.id_user);
 
-  return dto
+  return dto;
 }
 
 function PlaceFormPage() {
-  const { id } = useParams()
-  const placeId = id === undefined ? null : Number(id)
-  const navigate = useNavigate()
-  const { user } = useAuth()
-  const isAdmin = user?.role === 'ADMIN'
+  const { id } = useParams();
+  const placeId = id === undefined ? null : Number(id);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
-  const [values, setValues] = useState<PlaceFormValues>(emptyValues)
-  const [errors, setErrors] = useState<PlaceFormErrors>({})
-  const [organisers, setOrganisers] = useState<User[]>([])
-  const [ownerId, setOwnerId] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [apiError, setApiError] = useState<string | null>(null)
+  const [values, setValues] = useState<PlaceFormValues>(emptyValues);
+  const [errors, setErrors] = useState<PlaceFormErrors>({});
+  const [organisers, setOrganisers] = useState<User[]>([]);
+  const [ownerId, setOwnerId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
-    let ignore = false
+    let ignore = false;
 
     Promise.all([
       // La lista de usuarios solo la puede pedir un admin, y solo él la necesita.
@@ -123,10 +125,10 @@ function PlaceFormPage() {
       placeId === null ? null : placeService.getById(placeId),
     ])
       .then(([users, place]) => {
-        if (ignore) return
-        setOrganisers((users ?? []).filter((item) => item.role === 'ORGANISER'))
+        if (ignore) return;
+        setOrganisers((users ?? []).filter((item) => item.role === 'ORGANISER'));
         if (place) {
-          setOwnerId(place.id_user)
+          setOwnerId(place.id_user);
           setValues({
             name: place.name,
             capacity: String(place.capacity),
@@ -137,49 +139,49 @@ function PlaceFormPage() {
             street_number: place.street_number,
             zip_code: place.zip_code,
             id_user: String(place.id_user),
-          })
+          });
         }
       })
       .catch((err: Error) => {
-        if (!ignore) setApiError(err.message)
+        if (!ignore) setApiError(err.message);
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
-      })
+        if (!ignore) setLoading(false);
+      });
 
     return () => {
-      ignore = true
-    }
-  }, [placeId, isAdmin])
+      ignore = true;
+    };
+  }, [placeId, isAdmin]);
 
   const handleChange = (name: string, value: string) => {
-    setValues({ ...values, [name]: value })
-  }
+    setValues({ ...values, [name]: value });
+  };
 
   const save = async () => {
-    const validationErrors = validate(values, isAdmin)
-    setErrors(validationErrors)
-    if (Object.keys(validationErrors).length > 0) return
+    const validationErrors = validate(values, isAdmin);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
 
-    setSaving(true)
-    setApiError(null)
+    setSaving(true);
+    setApiError(null);
     try {
       if (placeId === null) {
-        await placeService.create(toDTO(values, isAdmin))
+        await placeService.create(toDTO(values, isAdmin));
       } else {
-        await placeService.update(placeId, toDTO(values, isAdmin))
+        await placeService.update(placeId, toDTO(values, isAdmin));
       }
-      navigate('/lugares')
+      navigate('/lugares');
     } catch (err) {
-      setApiError((err as Error).message)
-      setSaving(false)
+      setApiError((err as Error).message);
+      setSaving(false);
     }
-  }
+  };
 
-  if (loading) return <p className="text-slate-600">Cargando…</p>
+  if (loading) return <p className="text-slate-600">Cargando…</p>;
 
   // Un organizador no puede editar el lugar de otro.
-  if (ownerId !== null && !canManage(user, ownerId)) return <ForbiddenPage />
+  if (ownerId !== null && !canManage(user, ownerId)) return <ForbiddenPage />;
 
   return (
     <section className="mx-auto max-w-2xl">
@@ -197,8 +199,8 @@ function PlaceFormPage() {
         noValidate
         className="mt-6 grid gap-4 sm:grid-cols-2"
         onSubmit={(event) => {
-          event.preventDefault()
-          save()
+          event.preventDefault();
+          save();
         }}
       >
         {fields.map((field) => (
@@ -247,7 +249,7 @@ function PlaceFormPage() {
         </div>
       </form>
     </section>
-  )
+  );
 }
 
-export default PlaceFormPage
+export default PlaceFormPage;

@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import EventStatusBadge from '../components/EventStatusBadge'
-import SelectField from '../components/SelectField'
-import TextField from '../components/TextField'
-import { entryService } from '../services/entryService'
-import { eventService } from '../services/eventService'
-import { placeService } from '../services/placeService'
-import { EVENT_STATUS_LABELS } from '../types/event'
-import { buildCatalog, filterCatalog, uniqueSorted } from '../utils/catalog'
-import type { CatalogFilters, CatalogItem } from '../utils/catalog'
-import { formatDateTime } from '../utils/dates'
-import { formatPrice } from '../utils/money'
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import EventStatusBadge from '../components/EventStatusBadge';
+import SelectField from '../components/SelectField';
+import TextField from '../components/TextField';
+import { entryService } from '../services/entryService';
+import { eventService } from '../services/eventService';
+import { placeService } from '../services/placeService';
+import { EVENT_STATUS_LABELS } from '../types/event';
+import { buildCatalog, filterCatalog, uniqueSorted } from '../utils/catalog';
+import type { CatalogFilters, CatalogItem } from '../utils/catalog';
+import { formatDateTime } from '../utils/dates';
+import { formatPrice } from '../utils/money';
 
 const initialFilters: CatalogFilters = {
   search: '',
@@ -22,51 +22,51 @@ const initialFilters: CatalogFilters = {
   priceMin: '',
   priceMax: '',
   order: 'date',
-}
+};
 
 const statusOptions = Object.entries(EVENT_STATUS_LABELS).map(([value, label]) => ({
   value,
   label,
-}))
+}));
 
 const orderOptions = [
   { value: 'date', label: 'Fecha (más próximos primero)' },
   { value: 'popularity', label: 'Popularidad (más vendidos primero)' },
-]
+];
 
 function HomePage() {
-  const [items, setItems] = useState<CatalogItem[]>([])
-  const [filters, setFilters] = useState<CatalogFilters>(initialFilters)
-  const [showFilters, setShowFilters] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [items, setItems] = useState<CatalogItem[]>([]);
+  const [filters, setFilters] = useState<CatalogFilters>(initialFilters);
+  const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let ignore = false
+    let ignore = false;
 
     Promise.all([eventService.getAll(), placeService.getAll(), entryService.getAll()])
       .then(([events, places, entries]) => {
-        if (!ignore) setItems(buildCatalog(events, places, entries))
+        if (!ignore) setItems(buildCatalog(events, places, entries));
       })
       .catch((err: Error) => {
-        if (!ignore) setError(err.message)
+        if (!ignore) setError(err.message);
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
-      })
+        if (!ignore) setLoading(false);
+      });
 
     return () => {
-      ignore = true
-    }
-  }, [])
+      ignore = true;
+    };
+  }, []);
 
   const handleChange = (name: string, value: string) => {
-    setFilters({ ...filters, [name]: value })
-  }
+    setFilters({ ...filters, [name]: value });
+  };
 
-  const categories = uniqueSorted(items.map((item) => item.event.category))
-  const cities = uniqueSorted(items.flatMap((item) => (item.place ? [item.place.city] : [])))
-  const visibleItems = filterCatalog(items, filters)
+  const categories = uniqueSorted(items.map((item) => item.event.category));
+  const cities = uniqueSorted(items.flatMap((item) => (item.place ? [item.place.city] : [])));
+  const visibleItems = filterCatalog(items, filters);
 
   return (
     <section>
@@ -182,7 +182,9 @@ function HomePage() {
       )}
 
       <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {visibleItems.map(({ event, place, minPrice, available }) => (
+        {visibleItems.map(({
+          event, place, minPrice, available,
+        }) => (
           <li key={event.id}>
             <Link
               to={`/eventos/${event.id}`}
@@ -201,16 +203,16 @@ function HomePage() {
                 {minPrice === null ? 'Entradas próximamente' : `Desde ${formatPrice(minPrice)}`}
               </p>
               {minPrice !== null && (
-                <p className="text-sm text-slate-600">
-                  {available > 0 ? `${available} entradas disponibles` : 'Agotado'}
-                </p>
+              <p className="text-sm text-slate-600">
+                {available > 0 ? `${available} entradas disponibles` : 'Agotado'}
+              </p>
               )}
             </Link>
           </li>
         ))}
       </ul>
     </section>
-  )
+  );
 }
 
-export default HomePage
+export default HomePage;

@@ -1,12 +1,12 @@
 interface SelectFieldProps {
-  label: string
-  name: string
-  value: string
-  options: { value: string; label: string }[]
-  onChange: (name: string, value: string) => void
-  placeholder?: string
-  error?: string
-  required?: boolean
+  label: string;
+  name: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (name: string, value: string) => void;
+  placeholder?: string;
+  error?: string;
+  required?: boolean;
 }
 
 function SelectField({
@@ -42,7 +42,7 @@ function SelectField({
       </select>
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
-  )
+  );
 }
 
-export default SelectField
+export default SelectField;

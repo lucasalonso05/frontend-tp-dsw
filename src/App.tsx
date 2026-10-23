@@ -1,19 +1,19 @@
-import { Route, Routes } from 'react-router-dom'
-import Layout from './components/Layout'
-import ProtectedRoute from './components/ProtectedRoute'
-import EntriesPage from './pages/EntriesPage'
-import EntryFormPage from './pages/EntryFormPage'
-import EventDetailPage from './pages/EventDetailPage'
-import EventFormPage from './pages/EventFormPage'
-import EventsPage from './pages/EventsPage'
-import HomePage from './pages/HomePage'
-import LoginPage from './pages/LoginPage'
-import NotFoundPage from './pages/NotFoundPage'
-import PlaceFormPage from './pages/PlaceFormPage'
-import PlacesPage from './pages/PlacesPage'
-import RegisterPage from './pages/RegisterPage'
-import UserFormPage from './pages/UserFormPage'
-import UsersPage from './pages/UsersPage'
+import { Route, Routes } from 'react-router-dom';
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import EntriesPage from './pages/EntriesPage';
+import EntryFormPage from './pages/EntryFormPage';
+import EventDetailPage from './pages/EventDetailPage';
+import EventFormPage from './pages/EventFormPage';
+import EventsPage from './pages/EventsPage';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import NotFoundPage from './pages/NotFoundPage';
+import PlaceFormPage from './pages/PlaceFormPage';
+import PlacesPage from './pages/PlacesPage';
+import RegisterPage from './pages/RegisterPage';
+import UserFormPage from './pages/UserFormPage';
+import UsersPage from './pages/UsersPage';
 
 function App() {
   return (
@@ -48,7 +48,7 @@ function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

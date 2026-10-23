@@ -1,39 +1,39 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import SelectField from '../components/SelectField'
-import TextField from '../components/TextField'
-import { userService } from '../services/userService'
-import { USER_ROLE_LABELS } from '../types/user'
-import type { CreateUserDTO, UserRole } from '../types/user'
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import SelectField from '../components/SelectField';
+import TextField from '../components/TextField';
+import { userService } from '../services/userService';
+import { USER_ROLE_LABELS } from '../types/user';
+import type { CreateUserDTO, UserRole } from '../types/user';
 
 interface UserFormValues {
-  name: string
-  surname: string
-  doc_type: string
-  doc_number: string
-  email: string
-  telephone: string
-  role: string
-  cuit: string
-  password: string
+  name: string;
+  surname: string;
+  doc_type: string;
+  doc_number: string;
+  email: string;
+  telephone: string;
+  role: string;
+  cuit: string;
+  password: string;
 }
 
-type UserFormErrors = Partial<Record<keyof UserFormValues, string>>
+type UserFormErrors = Partial<Record<keyof UserFormValues, string>>;
 
 interface FieldConfig {
-  name: keyof UserFormValues
-  label: string
-  type?: 'text' | 'email' | 'tel'
-  options?: { value: string; label: string }[]
-  optional?: boolean
+  name: keyof UserFormValues;
+  label: string;
+  type?: 'text' | 'email' | 'tel';
+  options?: { value: string; label: string }[];
+  optional?: boolean;
 }
 
 const docTypeOptions = ['DNI', 'Pasaporte', 'LC', 'LE'].map((type) => ({
   value: type,
   label: type,
-}))
+}));
 
-const roleOptions = Object.entries(USER_ROLE_LABELS).map(([value, label]) => ({ value, label }))
+const roleOptions = Object.entries(USER_ROLE_LABELS).map(([value, label]) => ({ value, label }));
 
 const fields: FieldConfig[] = [
   { name: 'name', label: 'Nombre' },
@@ -44,7 +44,7 @@ const fields: FieldConfig[] = [
   { name: 'telephone', label: 'Teléfono', type: 'tel' },
   { name: 'role', label: 'Rol', options: roleOptions },
   { name: 'cuit', label: 'CUIT (solo organizadores)', optional: true },
-]
+];
 
 const emptyValues: UserFormValues = {
   name: '',
@@ -56,10 +56,10 @@ const emptyValues: UserFormValues = {
   role: 'ASSISTANT',
   cuit: '',
   password: '',
-}
+};
 
 function validate(values: UserFormValues, isEdit: boolean): UserFormErrors {
-  const errors: UserFormErrors = {}
+  const errors: UserFormErrors = {};
   const requiredFields: (keyof UserFormValues)[] = [
     'name',
     'surname',
@@ -68,30 +68,30 @@ function validate(values: UserFormValues, isEdit: boolean): UserFormErrors {
     'email',
     'telephone',
     'role',
-  ]
+  ];
 
   requiredFields.forEach((field) => {
-    if (values[field].trim() === '') errors[field] = 'Este campo es obligatorio'
-  })
+    if (values[field].trim() === '') errors[field] = 'Este campo es obligatorio';
+  });
 
-  const docLength = values.doc_number.trim().length
+  const docLength = values.doc_number.trim().length;
   if (!errors.doc_number && (docLength < 7 || docLength > 10)) {
-    errors.doc_number = 'Debe tener entre 7 y 10 caracteres'
+    errors.doc_number = 'Debe tener entre 7 y 10 caracteres';
   }
 
   if (!errors.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
-    errors.email = 'Ingresá un email válido'
+    errors.email = 'Ingresá un email válido';
   }
 
-  if (values.telephone.trim().length > 15) errors.telephone = 'Máximo 15 caracteres'
-  if (values.cuit.trim().length > 12) errors.cuit = 'Máximo 12 caracteres'
+  if (values.telephone.trim().length > 15) errors.telephone = 'Máximo 15 caracteres';
+  if (values.cuit.trim().length > 12) errors.cuit = 'Máximo 12 caracteres';
 
-  const passwordRequired = !isEdit || values.password !== ''
+  const passwordRequired = !isEdit || values.password !== '';
   if (passwordRequired && values.password.length < 8) {
-    errors.password = 'Debe tener al menos 8 caracteres'
+    errors.password = 'Debe tener al menos 8 caracteres';
   }
 
-  return errors
+  return errors;
 }
 
 function toDTO(values: UserFormValues): Omit<CreateUserDTO, 'password'> {
@@ -103,35 +103,35 @@ function toDTO(values: UserFormValues): Omit<CreateUserDTO, 'password'> {
     doc_number: values.doc_number.trim(),
     email: values.email.trim(),
     telephone: values.telephone.trim(),
-  }
+  };
 
-  const cuit = values.cuit.trim()
-  if (cuit !== '') dto.cuit = cuit
+  const cuit = values.cuit.trim();
+  if (cuit !== '') dto.cuit = cuit;
 
-  return dto
+  return dto;
 }
 
 function UserFormPage() {
-  const { id } = useParams()
-  const userId = id === undefined ? null : Number(id)
-  const isEdit = userId !== null
-  const navigate = useNavigate()
+  const { id } = useParams();
+  const userId = id === undefined ? null : Number(id);
+  const isEdit = userId !== null;
+  const navigate = useNavigate();
 
-  const [values, setValues] = useState<UserFormValues>(emptyValues)
-  const [errors, setErrors] = useState<UserFormErrors>({})
-  const [loading, setLoading] = useState(isEdit)
-  const [saving, setSaving] = useState(false)
-  const [apiError, setApiError] = useState<string | null>(null)
+  const [values, setValues] = useState<UserFormValues>(emptyValues);
+  const [errors, setErrors] = useState<UserFormErrors>({});
+  const [loading, setLoading] = useState(isEdit);
+  const [saving, setSaving] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (userId === null) return undefined
+    if (userId === null) return undefined;
 
-    let ignore = false
+    let ignore = false;
 
     userService
       .getById(userId)
       .then((user) => {
-        if (ignore) return
+        if (ignore) return;
         setValues({
           name: user.name,
           surname: user.surname,
@@ -142,49 +142,49 @@ function UserFormPage() {
           role: user.role,
           cuit: user.cuit ?? '',
           password: '',
-        })
+        });
       })
       .catch((err: Error) => {
-        if (!ignore) setApiError(err.message)
+        if (!ignore) setApiError(err.message);
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
-      })
+        if (!ignore) setLoading(false);
+      });
 
     return () => {
-      ignore = true
-    }
-  }, [userId])
+      ignore = true;
+    };
+  }, [userId]);
 
   const handleChange = (name: string, value: string) => {
-    setValues({ ...values, [name]: value })
-  }
+    setValues({ ...values, [name]: value });
+  };
 
   const save = async () => {
-    const validationErrors = validate(values, isEdit)
-    setErrors(validationErrors)
-    if (Object.keys(validationErrors).length > 0) return
+    const validationErrors = validate(values, isEdit);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
 
-    setSaving(true)
-    setApiError(null)
+    setSaving(true);
+    setApiError(null);
     try {
-      const dto = toDTO(values)
+      const dto = toDTO(values);
       if (userId === null) {
-        await userService.create({ ...dto, password: values.password })
+        await userService.create({ ...dto, password: values.password });
       } else {
         await userService.update(
           userId,
           values.password === '' ? dto : { ...dto, password: values.password },
-        )
+        );
       }
-      navigate('/personas')
+      navigate('/personas');
     } catch (err) {
-      setApiError((err as Error).message)
-      setSaving(false)
+      setApiError((err as Error).message);
+      setSaving(false);
     }
-  }
+  };
 
-  if (loading) return <p className="text-slate-600">Cargando…</p>
+  if (loading) return <p className="text-slate-600">Cargando…</p>;
 
   return (
     <section className="mx-auto max-w-2xl">
@@ -202,35 +202,33 @@ function UserFormPage() {
         noValidate
         className="mt-6 grid gap-4 sm:grid-cols-2"
         onSubmit={(event) => {
-          event.preventDefault()
-          save()
+          event.preventDefault();
+          save();
         }}
       >
-        {fields.map((field) =>
-          field.options ? (
-            <SelectField
-              key={field.name}
-              label={field.label}
-              name={field.name}
-              value={values[field.name]}
-              options={field.options}
-              error={errors[field.name]}
-              required
-              onChange={handleChange}
-            />
-          ) : (
-            <TextField
-              key={field.name}
-              label={field.label}
-              name={field.name}
-              type={field.type}
-              value={values[field.name]}
-              error={errors[field.name]}
-              required={!field.optional}
-              onChange={handleChange}
-            />
-          ),
-        )}
+        {fields.map((field) => (field.options ? (
+          <SelectField
+            key={field.name}
+            label={field.label}
+            name={field.name}
+            value={values[field.name]}
+            options={field.options}
+            error={errors[field.name]}
+            required
+            onChange={handleChange}
+          />
+        ) : (
+          <TextField
+            key={field.name}
+            label={field.label}
+            name={field.name}
+            type={field.type}
+            value={values[field.name]}
+            error={errors[field.name]}
+            required={!field.optional}
+            onChange={handleChange}
+          />
+        )))}
 
         <div className="sm:col-span-2">
           <TextField
@@ -258,7 +256,7 @@ function UserFormPage() {
         </div>
       </form>
     </section>
-  )
+  );
 }
 
-export default UserFormPage
+export default UserFormPage;

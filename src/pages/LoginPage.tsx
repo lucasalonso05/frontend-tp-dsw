@@ -1,39 +1,39 @@
-import { useState } from 'react'
-import TextField from '../components/TextField'
-import { useAuth } from '../hooks/useAuth'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import TextField from '../components/TextField';
+import { useAuth } from '../hooks/useAuth';
 
 function LoginPage() {
-  const { login } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   // Si llegó acá porque quiso entrar a una página que pide sesión, después vuelve a esa página.
-  const from = (location.state as { from?: string } | null)?.from ?? '/'
+  const from = (location.state as { from?: string } | null)?.from ?? '/';
 
-  const [values, setValues] = useState({ email: '', password: '' })
-  const [error, setError] = useState<string | null>(null)
-  const [sending, setSending] = useState(false)
+  const [values, setValues] = useState({ email: '', password: '' });
+  const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
 
   const handleChange = (name: string, value: string) => {
-    setValues({ ...values, [name]: value })
-  }
+    setValues({ ...values, [name]: value });
+  };
 
   const submit = async () => {
     if (values.email.trim() === '' || values.password === '') {
-      setError('Completá el email y la contraseña')
-      return
+      setError('Completá el email y la contraseña');
+      return;
     }
 
-    setSending(true)
-    setError(null)
+    setSending(true);
+    setError(null);
     try {
-      await login(values.email.trim(), values.password)
-      navigate(from, { replace: true })
+      await login(values.email.trim(), values.password);
+      navigate(from, { replace: true });
     } catch (err) {
-      setError((err as Error).message)
-      setSending(false)
+      setError((err as Error).message);
+      setSending(false);
     }
-  }
+  };
 
   return (
     <section className="mx-auto max-w-sm">
@@ -49,8 +49,8 @@ function LoginPage() {
         noValidate
         className="mt-6 space-y-4"
         onSubmit={(event) => {
-          event.preventDefault()
-          submit()
+          event.preventDefault();
+          submit();
         }}
       >
         <TextField
@@ -75,14 +75,14 @@ function LoginPage() {
           {sending ? 'Ingresando…' : 'Ingresar'}
         </button>
       </form>
-            <p className="mt-4 text-center text-sm text-slate-600">
+      <p className="mt-4 text-center text-sm text-slate-600">
         ¿No tenés cuenta?{' '}
         <Link to="/registrarse" className="text-blue-600 hover:underline">
           Registrate
         </Link>
       </p>
     </section>
-  )
+  );
 }
 
-export default LoginPage
+export default LoginPage;

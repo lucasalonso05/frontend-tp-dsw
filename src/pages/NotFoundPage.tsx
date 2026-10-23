@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom';
 
 function NotFoundPage() {
   return (
@@ -12,7 +12,7 @@ function NotFoundPage() {
         Volver al inicio
       </Link>
     </section>
-  )
+  );
 }
 
-export default NotFoundPage
+export default NotFoundPage;

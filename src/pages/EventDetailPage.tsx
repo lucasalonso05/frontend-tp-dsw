@@ -1,58 +1,58 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import EventStatusBadge from '../components/EventStatusBadge'
-import { entryService } from '../services/entryService'
-import { eventService } from '../services/eventService'
-import { placeService } from '../services/placeService'
-import type { Entry } from '../types/entry'
-import type { EventModel } from '../types/event'
-import type { Place } from '../types/place'
-import { formatDateTime } from '../utils/dates'
-import { formatPrice } from '../utils/money'
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import EventStatusBadge from '../components/EventStatusBadge';
+import { entryService } from '../services/entryService';
+import { eventService } from '../services/eventService';
+import { placeService } from '../services/placeService';
+import type { Entry } from '../types/entry';
+import type { EventModel } from '../types/event';
+import type { Place } from '../types/place';
+import { formatDateTime } from '../utils/dates';
+import { formatPrice } from '../utils/money';
 
 interface EventDetail {
-  event: EventModel
-  place: Place
-  entries: Entry[]
+  event: EventModel;
+  place: Place;
+  entries: Entry[];
 }
 
 async function loadDetail(eventId: number): Promise<EventDetail> {
-  const event = await eventService.getById(eventId)
+  const event = await eventService.getById(eventId);
   const [place, entries] = await Promise.all([
     placeService.getById(event.id_place),
     entryService.getByEvent(eventId),
-  ])
-  return { event, place, entries }
+  ]);
+  return { event, place, entries };
 }
 
 function EventDetailPage() {
-  const { id } = useParams()
-  const eventId = Number(id)
+  const { id } = useParams();
+  const eventId = Number(id);
 
-  const [detail, setDetail] = useState<EventDetail | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [detail, setDetail] = useState<EventDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let ignore = false
+    let ignore = false;
 
     loadDetail(eventId)
       .then((data) => {
-        if (!ignore) setDetail(data)
+        if (!ignore) setDetail(data);
       })
       .catch((err: Error) => {
-        if (!ignore) setError(err.message)
+        if (!ignore) setError(err.message);
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
-      })
+        if (!ignore) setLoading(false);
+      });
 
     return () => {
-      ignore = true
-    }
-  }, [eventId])
+      ignore = true;
+    };
+  }, [eventId]);
 
-  if (loading) return <p className="text-slate-600">Cargando evento…</p>
+  if (loading) return <p className="text-slate-600">Cargando evento…</p>;
 
   if (!detail) {
     return (
@@ -64,11 +64,11 @@ function EventDetailPage() {
           ← Volver a la cartelera
         </Link>
       </section>
-    )
+    );
   }
 
-  const { event, place, entries } = detail
-  const sortedEntries = [...entries].sort((a, b) => Number(a.unit_price) - Number(b.unit_price))
+  const { event, place, entries } = detail;
+  const sortedEntries = [...entries].sort((a, b) => Number(a.unit_price) - Number(b.unit_price));
 
   return (
     <section>
@@ -113,7 +113,7 @@ function EventDetailPage() {
           <div className="rounded-lg border border-slate-200 bg-white p-4">
             <h2 className="font-semibold">Organiza</h2>
             <p className="mt-1 text-sm">
-            {event.FK_user.name} {event.FK_user.surname}
+              {event.FK_user.name} {event.FK_user.surname}
             </p>
           </div>
         </div>
@@ -127,7 +127,7 @@ function EventDetailPage() {
 
           <ul className="mt-3 space-y-3">
             {sortedEntries.map((entry) => {
-              const available = entry.stock - entry.sold_stock
+              const available = entry.stock - entry.sold_stock;
 
               return (
                 <li
@@ -151,13 +151,13 @@ function EventDetailPage() {
                     </p>
                   </div>
                 </li>
-              )
+              );
             })}
           </ul>
         </div>
       </div>
     </section>
-  )
+  );
 }
 
-export default EventDetailPage
+export default EventDetailPage;

@@ -1,7 +1,7 @@
 /// <reference types="vitest/config" />
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
-import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -10,9 +10,9 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
   },
-    test: {
+  test: {
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
     pool: 'threads',
   },
-})
+});

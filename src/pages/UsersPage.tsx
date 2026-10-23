@@ -1,60 +1,59 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { userService } from '../services/userService'
-import { USER_ROLE_LABELS } from '../types/user'
-import type { User, UserRole } from '../types/user'
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { userService } from '../services/userService';
+import { USER_ROLE_LABELS } from '../types/user';
+import type { User, UserRole } from '../types/user';
 
-type RoleFilter = UserRole | 'ALL'
+type RoleFilter = UserRole | 'ALL';
 
 const filters: { value: RoleFilter; label: string }[] = [
   { value: 'ALL', label: 'Todos' },
   { value: 'ASSISTANT', label: 'Asistentes' },
   { value: 'ORGANISER', label: 'Organizadores' },
   { value: 'ADMIN', label: 'Administradores' },
-]
+];
 
 function UsersPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [roleFilter, setRoleFilter] = useState<RoleFilter>('ALL')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [users, setUsers] = useState<User[]>([]);
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('ALL');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let ignore = false
+    let ignore = false;
 
     userService
       .getAll()
       .then((data) => {
-        if (!ignore) setUsers(data)
+        if (!ignore) setUsers(data);
       })
       .catch((err: Error) => {
-        if (!ignore) setError(err.message)
+        if (!ignore) setError(err.message);
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
-      })
+        if (!ignore) setLoading(false);
+      });
 
     return () => {
-      ignore = true
-    }
-  }, [])
+      ignore = true;
+    };
+  }, []);
 
   const handleDelete = async (user: User) => {
-    if (!window.confirm(`¿Eliminar a ${user.name} ${user.surname}?`)) return
+    if (!window.confirm(`¿Eliminar a ${user.name} ${user.surname}?`)) return;
 
-    setError(null)
+    setError(null);
     try {
-      await userService.remove(user.id)
-      setUsers(users.filter((item) => item.id !== user.id))
+      await userService.remove(user.id);
+      setUsers(users.filter((item) => item.id !== user.id));
     } catch {
       setError(
         'No se pudo eliminar a la persona. Si tiene eventos, lugares, compras o entradas asociadas, no se puede borrar.',
-      )
+      );
     }
-  }
+  };
 
-  const visibleUsers =
-    roleFilter === 'ALL' ? users : users.filter((user) => user.role === roleFilter)
+  const visibleUsers = roleFilter === 'ALL' ? users : users.filter((user) => user.role === roleFilter);
 
   return (
     <section>
@@ -134,7 +133,7 @@ function UsersPage() {
         ))}
       </ul>
     </section>
-  )
+  );
 }
 
-export default UsersPage
+export default UsersPage;

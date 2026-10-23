@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom';
 
 function ForbiddenPage() {
   return (
@@ -15,7 +15,7 @@ function ForbiddenPage() {
         Volver a la cartelera
       </Link>
     </section>
-  )
+  );
 }
 
-export default ForbiddenPage
+export default ForbiddenPage;
