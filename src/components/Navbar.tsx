@@ -1,14 +1,14 @@
-import { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { USER_ROLE_LABELS } from '../types/user'
-import type { UserRole } from '../types/user'
+import { useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { USER_ROLE_LABELS } from '../types/user';
+import type { UserRole } from '../types/user';
 
 interface NavItem {
-  to: string
-  label: string
+  to: string;
+  label: string;
   /** Si se indica, el enlace solo lo ven estos roles. Sin roles, lo ven todos. */
-  roles?: UserRole[]
+  roles?: UserRole[];
 }
 
 const links: NavItem[] = [
@@ -16,26 +16,25 @@ const links: NavItem[] = [
   { to: '/eventos', label: 'Eventos', roles: ['ORGANISER', 'ADMIN'] },
   { to: '/lugares', label: 'Lugares', roles: ['ORGANISER', 'ADMIN'] },
   { to: '/personas', label: 'Personas', roles: ['ADMIN'] },
-]
+];
 
-const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `block rounded px-2 py-2 ${isActive ? 'font-semibold text-blue-600' : 'text-slate-700 hover:text-blue-600'}`
+const linkClass = ({ isActive }: { isActive: boolean }) => `block rounded px-2 py-2 ${isActive ? 'font-semibold text-blue-600' : 'text-slate-700 hover:text-blue-600'}`;
 
 function Navbar() {
-  const [open, setOpen] = useState(false)
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
+  const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   // Cada usuario ve solo los enlaces de su rol.
   const visibleLinks = links.filter(
     (link) => !link.roles || (user !== null && link.roles.includes(user.role)),
-  )
+  );
 
   const handleLogout = () => {
-    logout()
-    setOpen(false)
-    navigate('/')
-  }
+    logout();
+    setOpen(false);
+    navigate('/');
+  };
 
   return (
     <header className="border-b border-slate-200 bg-white">
@@ -106,7 +105,7 @@ function Navbar() {
         </ul>
       </nav>
     </header>
-  )
+  );
 }
 
-export default Navbar
+export default Navbar;

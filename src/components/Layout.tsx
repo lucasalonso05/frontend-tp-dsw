@@ -1,5 +1,5 @@
-import { Outlet } from 'react-router-dom'
-import Navbar from './Navbar.tsx'
+import { Outlet } from 'react-router-dom';
+import Navbar from './Navbar';
 
 function Layout() {
   return (
@@ -9,7 +9,7 @@ function Layout() {
         <Outlet />
       </main>
     </div>
-  )
+  );
 }
 
-export default Layout
+export default Layout;

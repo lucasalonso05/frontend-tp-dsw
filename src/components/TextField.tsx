@@ -1,11 +1,11 @@
 interface TextFieldProps {
-  label: string
-  name: string
-  value: string
-  onChange: (name: string, value: string) => void
-type?: 'text' | 'number' | 'email' | 'password' | 'tel' | 'datetime-local' | 'date'
-error?: string
-  required?: boolean
+  label: string;
+  name: string;
+  value: string;
+  onChange: (name: string, value: string) => void;
+  type?: 'text' | 'number' | 'email' | 'password' | 'tel' | 'datetime-local' | 'date';
+  error?: string;
+  required?: boolean;
 }
 
 function TextField({
@@ -39,7 +39,7 @@ function TextField({
         </p>
       )}
     </div>
-  )
+  );
 }
 
-export default TextField
+export default TextField;

@@ -1,63 +1,62 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import EventStatusBadge from '../components/EventStatusBadge'
-import { useAuth } from '../hooks/useAuth'
-import { eventService } from '../services/eventService'
-import { placeService } from '../services/placeService'
-import type { EventModel } from '../types/event'
-import type { Place } from '../types/place'
-import { formatDateTime } from '../utils/dates'
-import { canManage } from '../utils/permissions'
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import EventStatusBadge from '../components/EventStatusBadge';
+import { useAuth } from '../hooks/useAuth';
+import { eventService } from '../services/eventService';
+import { placeService } from '../services/placeService';
+import type { EventModel } from '../types/event';
+import type { Place } from '../types/place';
+import { formatDateTime } from '../utils/dates';
+import { canManage } from '../utils/permissions';
 
 function EventsPage() {
-  const { user } = useAuth()
-  const isAdmin = user?.role === 'ADMIN'
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
-  const [events, setEvents] = useState<EventModel[]>([])
-  const [places, setPlaces] = useState<Place[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [events, setEvents] = useState<EventModel[]>([]);
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let ignore = false
+    let ignore = false;
 
     Promise.all([eventService.getAll(), placeService.getAll()])
       .then(([eventList, placeList]) => {
-        if (ignore) return
-        setEvents(eventList)
-        setPlaces(placeList)
+        if (ignore) return;
+        setEvents(eventList);
+        setPlaces(placeList);
       })
       .catch((err: Error) => {
-        if (!ignore) setError(err.message)
+        if (!ignore) setError(err.message);
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
-      })
+        if (!ignore) setLoading(false);
+      });
 
     return () => {
-      ignore = true
-    }
-  }, [])
+      ignore = true;
+    };
+  }, []);
 
   const handleCancel = async (event: EventModel) => {
-    if (!window.confirm(`¿Cancelar el evento "${event.title}"?`)) return
+    if (!window.confirm(`¿Cancelar el evento "${event.title}"?`)) return;
 
-    setError(null)
+    setError(null);
     try {
-      const cancelled = await eventService.cancel(event.id)
-      setEvents(events.map((item) => (item.id === cancelled.id ? cancelled : item)))
+      const cancelled = await eventService.cancel(event.id);
+      setEvents(events.map((item) => (item.id === cancelled.id ? cancelled : item)));
     } catch (err) {
-      setError((err as Error).message)
+      setError((err as Error).message);
     }
-  }
+  };
 
-  const placeName = (id: number) =>
-    places.find((place) => place.id === id)?.name ?? 'Lugar no disponible'
+  const placeName = (id: number) => places.find((place) => place.id === id)?.name ?? 'Lugar no disponible';
 
   // Un organizador ve solo sus eventos; un admin, todos.
   const visibleEvents = events
     .filter((event) => canManage(user, event.id_user))
-    .sort((a, b) => a.date_time_start.localeCompare(b.date_time_start))
+    .sort((a, b) => a.date_time_start.localeCompare(b.date_time_start));
 
   return (
     <section>
@@ -133,7 +132,7 @@ function EventsPage() {
         ))}
       </ul>
     </section>
-  )
+  );
 }
 
-export default EventsPage
+export default EventsPage;

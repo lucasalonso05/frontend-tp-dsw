@@ -1,52 +1,52 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { placeService } from '../services/placeService'
-import type { Place } from '../types/place'
-import { canManage } from '../utils/permissions'
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { placeService } from '../services/placeService';
+import type { Place } from '../types/place';
+import { canManage } from '../utils/permissions';
 
 function PlacesPage() {
-  const { user } = useAuth()
-  const isAdmin = user?.role === 'ADMIN'
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
-  const [places, setPlaces] = useState<Place[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let ignore = false
+    let ignore = false;
 
     placeService
       .getAll()
       .then((data) => {
-        if (!ignore) setPlaces(data)
+        if (!ignore) setPlaces(data);
       })
       .catch((err: Error) => {
-        if (!ignore) setError(err.message)
+        if (!ignore) setError(err.message);
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
-      })
+        if (!ignore) setLoading(false);
+      });
 
     return () => {
-      ignore = true
-    }
-  }, [])
+      ignore = true;
+    };
+  }, []);
 
   const handleDelete = async (place: Place) => {
-    if (!window.confirm(`¿Eliminar el lugar "${place.name}"?`)) return
+    if (!window.confirm(`¿Eliminar el lugar "${place.name}"?`)) return;
 
-    setError(null)
+    setError(null);
     try {
-      await placeService.remove(place.id)
-      setPlaces(places.filter((item) => item.id !== place.id))
+      await placeService.remove(place.id);
+      setPlaces(places.filter((item) => item.id !== place.id));
     } catch {
-      setError('No se pudo eliminar el lugar. Si tiene eventos asociados, no se puede borrar.')
+      setError('No se pudo eliminar el lugar. Si tiene eventos asociados, no se puede borrar.');
     }
-  }
+  };
 
   // Un organizador ve solo sus lugares; un admin, todos.
-  const visiblePlaces = places.filter((place) => canManage(user, place.id_user))
+  const visiblePlaces = places.filter((place) => canManage(user, place.id_user));
 
   return (
     <section>
@@ -102,7 +102,7 @@ function PlacesPage() {
         ))}
       </ul>
     </section>
-  )
+  );
 }
 
-export default PlacesPage
+export default PlacesPage;
