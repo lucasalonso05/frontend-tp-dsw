@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Ticket } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { USER_ROLE_LABELS } from '../types/user';
 import type { UserRole } from '../types/user';
@@ -39,7 +40,8 @@ function Navbar() {
   return (
     <header className="border-b border-slate-200 bg-white">
       <nav className="mx-auto flex max-w-5xl flex-wrap items-center justify-between p-4">
-        <Link to="/" className="text-xl font-bold text-blue-600">
+        <Link to="/" className="flex items-center gap-2 text-xl font-semibold text-blue-800">
+          <Ticket className="size-6" />
           Eventify
         </Link>
 
