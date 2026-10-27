@@ -7,12 +7,15 @@ import '@fontsource/ibm-plex-sans/600.css';
 import './index.css';
 import App from './App';
 import AuthProvider from './context/AuthProvider';
+import ToastProvider from './context/ToastProvider';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
