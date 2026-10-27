@@ -1,17 +1,28 @@
+import { MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import Alert from '../components/Alert';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import ConfirmDialog from '../components/ConfirmDialog';
+import EmptyState from '../components/EmptyState';
+import Loading from '../components/Loading';
+import PageHeader from '../components/PageHeader';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import { placeService } from '../services/placeService';
 import type { Place } from '../types/place';
 import { canManage } from '../utils/permissions';
 
 function PlacesPage() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const isAdmin = user?.role === 'ADMIN';
 
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // El lugar que se quiere eliminar, mientras se espera la confirmación.
+  const [toDelete, setToDelete] = useState<Place | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -34,14 +45,13 @@ function PlacesPage() {
   }, []);
 
   const handleDelete = async (place: Place) => {
-    if (!window.confirm(`¿Eliminar el lugar "${place.name}"?`)) return;
-
-    setError(null);
+    setToDelete(null);
     try {
       await placeService.remove(place.id);
       setPlaces(places.filter((item) => item.id !== place.id));
+      showToast(`Se eliminó el lugar "${place.name}"`);
     } catch {
-      setError('No se pudo eliminar el lugar. Si tiene eventos asociados, no se puede borrar.');
+      showToast('No se pudo eliminar el lugar. Si tiene eventos asociados, no se puede borrar.', 'error');
     }
   };
 
@@ -49,58 +59,56 @@ function PlacesPage() {
   const visiblePlaces = places.filter((place) => canManage(user, place.id_user));
 
   return (
-    <section>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold md:text-3xl">{isAdmin ? 'Lugares' : 'Mis lugares'}</h1>
-        <Link
-          to="/lugares/nuevo"
-          className="rounded bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700"
-        >
-          Nuevo lugar
-        </Link>
-      </div>
+    <section className="space-y-6">
+      <PageHeader
+        title={isAdmin ? 'Lugares' : 'Mis lugares'}
+        action={<Button to="/lugares/nuevo">Nuevo lugar</Button>}
+      />
 
-      {loading && <p className="mt-4 text-slate-600">Cargando lugares…</p>}
+      {loading && <Loading label="Cargando lugares…" />}
 
-      {error && (
-        <p role="alert" className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {error}
-        </p>
-      )}
+      {error && <Alert>{error}</Alert>}
 
       {!loading && !error && visiblePlaces.length === 0 && (
-        <p className="mt-4 text-slate-600">
-          {isAdmin ? 'Todavía no hay lugares cargados.' : 'Todavía no cargaste ningún lugar.'}
-        </p>
+        <EmptyState
+          icon={MapPin}
+          title={isAdmin ? 'Todavía no hay lugares' : 'Todavía no cargaste ningún lugar'}
+          description="Los eventos se hacen en un lugar: cargá uno para poder crear eventos."
+        />
       )}
 
-      <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visiblePlaces.map((place) => (
-          <li key={place.id} className="flex flex-col rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="font-semibold">{place.name}</h2>
-            <p className="text-sm text-slate-600">
-              {place.street} {place.street_number}, {place.city}, {place.province}
-            </p>
-            <p className="mt-2 text-sm">Capacidad: {place.capacity} personas</p>
+          <li key={place.id}>
+            <Card className="flex h-full flex-col">
+              <h2 className="font-semibold">{place.name}</h2>
+              <p className="text-sm text-slate-600">
+                {place.street} {place.street_number}, {place.city}, {place.province}
+              </p>
+              <p className="mt-2 text-sm">Capacidad: {place.capacity} personas</p>
 
-            <div className="mt-4 flex gap-2">
-              <Link
-                to={`/lugares/${place.id}/editar`}
-                className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
-              >
-                Editar
-              </Link>
-              <button
-                type="button"
-                onClick={() => handleDelete(place)}
-                className="rounded border border-red-300 px-3 py-1 text-sm text-red-700 hover:bg-red-50"
-              >
-                Eliminar
-              </button>
-            </div>
+              <div className="mt-auto flex gap-2 pt-4">
+                <Button to={`/lugares/${place.id}/editar`} variant="secondary" size="sm">
+                  Editar
+                </Button>
+                <Button variant="dangerOutline" size="sm" onClick={() => setToDelete(place)}>
+                  Eliminar
+                </Button>
+              </div>
+            </Card>
           </li>
         ))}
       </ul>
+
+      {toDelete && (
+        <ConfirmDialog
+          title="¿Eliminar el lugar?"
+          message={`Se va a eliminar "${toDelete.name}". Esta acción no se puede deshacer.`}
+          confirmLabel="Eliminar"
+          onConfirm={() => handleDelete(toDelete)}
+          onCancel={() => setToDelete(null)}
+        />
+      )}
     </section>
   );
 }

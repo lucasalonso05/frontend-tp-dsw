@@ -1,7 +1,15 @@
+import { CalendarDays } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import Alert from '../components/Alert';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import ConfirmDialog from '../components/ConfirmDialog';
+import EmptyState from '../components/EmptyState';
 import EventStatusBadge from '../components/EventStatusBadge';
+import Loading from '../components/Loading';
+import PageHeader from '../components/PageHeader';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import { eventService } from '../services/eventService';
 import { placeService } from '../services/placeService';
 import type { EventModel } from '../types/event';
@@ -11,12 +19,15 @@ import { canManage } from '../utils/permissions';
 
 function EventsPage() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const isAdmin = user?.role === 'ADMIN';
 
   const [events, setEvents] = useState<EventModel[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // El evento que se quiere cancelar, mientras se espera la confirmación.
+  const [toCancel, setToCancel] = useState<EventModel | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -40,14 +51,13 @@ function EventsPage() {
   }, []);
 
   const handleCancel = async (event: EventModel) => {
-    if (!window.confirm(`¿Cancelar el evento "${event.title}"?`)) return;
-
-    setError(null);
+    setToCancel(null);
     try {
       const cancelled = await eventService.cancel(event.id);
       setEvents(events.map((item) => (item.id === cancelled.id ? cancelled : item)));
+      showToast(`Se canceló el evento "${event.title}"`);
     } catch (err) {
-      setError((err as Error).message);
+      showToast((err as Error).message, 'error');
     }
   };
 
@@ -59,78 +69,71 @@ function EventsPage() {
     .sort((a, b) => a.date_time_start.localeCompare(b.date_time_start));
 
   return (
-    <section>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold md:text-3xl">
-          {isAdmin ? 'Gestión de eventos' : 'Mis eventos'}
-        </h1>
-        <Link
-          to="/eventos/nuevo"
-          className="rounded bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700"
-        >
-          Nuevo evento
-        </Link>
-      </div>
+    <section className="space-y-6">
+      <PageHeader
+        title={isAdmin ? 'Gestión de eventos' : 'Mis eventos'}
+        action={<Button to="/eventos/nuevo">Nuevo evento</Button>}
+      />
 
-      {loading && <p className="mt-4 text-slate-600">Cargando eventos…</p>}
+      {loading && <Loading label="Cargando eventos…" />}
 
-      {error && (
-        <p role="alert" className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {error}
-        </p>
-      )}
+      {error && <Alert>{error}</Alert>}
 
       {!loading && !error && visibleEvents.length === 0 && (
-        <p className="mt-4 text-slate-600">
-          {isAdmin ? 'Todavía no hay eventos cargados.' : 'Todavía no creaste ningún evento.'}
-        </p>
+        <EmptyState
+          icon={CalendarDays}
+          title={isAdmin ? 'Todavía no hay eventos' : 'Todavía no creaste ningún evento'}
+          description="Creá un evento y después cargale los tipos de entrada que se van a vender."
+        />
       )}
 
-      <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visibleEvents.map((event) => (
-          <li key={event.id} className="flex flex-col rounded-lg border border-slate-200 bg-white p-4">
-            <div className="flex items-start justify-between gap-2">
-              <h2 className="font-semibold">{event.title}</h2>
-              <EventStatusBadge status={event.status} />
-            </div>
-            <p className="text-sm text-slate-600">{event.category}</p>
-            <p className="mt-2 text-sm">
-              {formatDateTime(event.date_time_start)} a {formatDateTime(event.date_time_end)}
-            </p>
-            <p className="text-sm text-slate-600">{placeName(event.id_place)}</p>
-            {isAdmin && (
-              <p className="text-sm text-slate-600">
-                Organiza: {event.FK_user.name} {event.FK_user.surname}
+          <li key={event.id}>
+            <Card className="flex h-full flex-col">
+              <div className="flex items-start justify-between gap-2">
+                <h2 className="font-semibold">{event.title}</h2>
+                <EventStatusBadge status={event.status} />
+              </div>
+              <p className="text-sm text-slate-600">{event.category}</p>
+              <p className="mt-2 text-sm">
+                {formatDateTime(event.date_time_start)} a {formatDateTime(event.date_time_end)}
               </p>
-            )}
-            <p className="mt-2 text-sm">Stock total: {event.total_stock} entradas</p>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link
-                to={`/eventos/${event.id}/editar`}
-                className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
-              >
-                Editar
-              </Link>
-              <Link
-                to={`/eventos/${event.id}/entradas`}
-                className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
-              >
-                Entradas
-              </Link>
-              {event.status !== 'CANCELLED' && (
-                <button
-                  type="button"
-                  onClick={() => handleCancel(event)}
-                  className="rounded border border-red-300 px-3 py-1 text-sm text-red-700 hover:bg-red-50"
-                >
-                  Cancelar evento
-                </button>
+              <p className="text-sm text-slate-600">{placeName(event.id_place)}</p>
+              {isAdmin && (
+                <p className="text-sm text-slate-600">
+                  Organiza: {event.FK_user.name} {event.FK_user.surname}
+                </p>
               )}
-            </div>
+              <p className="mt-2 text-sm">Stock total: {event.total_stock} entradas</p>
+
+              <div className="mt-auto flex flex-wrap gap-2 pt-4">
+                <Button to={`/eventos/${event.id}/editar`} variant="secondary" size="sm">
+                  Editar
+                </Button>
+                <Button to={`/eventos/${event.id}/entradas`} variant="secondary" size="sm">
+                  Entradas
+                </Button>
+                {event.status !== 'CANCELLED' && (
+                  <Button variant="dangerOutline" size="sm" onClick={() => setToCancel(event)}>
+                    Cancelar evento
+                  </Button>
+                )}
+              </div>
+            </Card>
           </li>
         ))}
       </ul>
+
+      {toCancel && (
+        <ConfirmDialog
+          title="¿Cancelar el evento?"
+          message={`"${toCancel.title}" va a quedar cancelado y no se van a poder vender más entradas.`}
+          confirmLabel="Cancelar evento"
+          onConfirm={() => handleCancel(toCancel)}
+          onCancel={() => setToCancel(null)}
+        />
+      )}
     </section>
   );
 }
