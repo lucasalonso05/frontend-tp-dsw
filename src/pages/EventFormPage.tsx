@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import Alert from '../components/Alert';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import Loading from '../components/Loading';
+import PageHeader from '../components/PageHeader';
 import SelectField from '../components/SelectField';
 import TextField from '../components/TextField';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import { eventService } from '../services/eventService';
 import { placeService } from '../services/placeService';
 import { userService } from '../services/userService';
@@ -115,6 +121,7 @@ function EventFormPage() {
   const isEdit = eventId !== null;
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const isAdmin = user?.role === 'ADMIN';
 
   const [values, setValues] = useState<EventFormValues>(emptyValues);
@@ -184,6 +191,7 @@ function EventFormPage() {
       } else {
         await eventService.update(eventId, dto);
       }
+      showToast(eventId === null ? 'Evento creado' : 'Cambios guardados');
       navigate('/eventos');
     } catch (err) {
       setApiError((err as Error).message);
@@ -191,7 +199,7 @@ function EventFormPage() {
     }
   };
 
-  if (loading) return <p className="text-slate-600">Cargando…</p>;
+  if (loading) return <Loading />;
 
   // Un organizador no puede editar el evento de otro.
   if (original && !canManage(user, original.id_user)) return <ForbiddenPage />;
@@ -228,65 +236,58 @@ function EventFormPage() {
   if (isEdit) fields.push({ name: 'status', label: 'Estado', options: statusOptions });
 
   return (
-    <section className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold md:text-3xl">
-        {isEdit ? 'Editar evento' : 'Nuevo evento'}
-      </h1>
 
-      {apiError && (
-        <p role="alert" className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {apiError}
-        </p>
-      )}
+    <section className="mx-auto max-w-2xl space-y-6">
+      <PageHeader title={isEdit ? 'Editar evento' : 'Nuevo evento'} />
 
-      <form
-        noValidate
-        className="mt-6 grid gap-4 sm:grid-cols-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          save();
-        }}
-      >
-        {fields.map((field) => (
-          <div key={field.name} className={field.wide ? 'sm:col-span-2' : undefined}>
-            {field.options ? (
-              <SelectField
-                label={field.label}
-                name={field.name}
-                value={values[field.name]}
-                options={field.options}
-                placeholder={field.placeholder}
-                error={errors[field.name]}
-                required
-                onChange={handleChange}
-              />
-            ) : (
-              <TextField
-                label={field.label}
-                name={field.name}
-                type={field.type}
-                value={values[field.name]}
-                error={errors[field.name]}
-                required
-                onChange={handleChange}
-              />
-            )}
+      {apiError && <Alert>{apiError}</Alert>}
+
+      <Card className="sm:p-6">
+        <form
+          noValidate
+          className="grid gap-4 sm:grid-cols-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            save();
+          }}
+        >
+          {fields.map((field) => (
+            <div key={field.name} className={field.wide ? 'sm:col-span-2' : undefined}>
+              {field.options ? (
+                <SelectField
+                  label={field.label}
+                  name={field.name}
+                  value={values[field.name]}
+                  options={field.options}
+                  placeholder={field.placeholder}
+                  error={errors[field.name]}
+                  required
+                  onChange={handleChange}
+                />
+              ) : (
+                <TextField
+                  label={field.label}
+                  name={field.name}
+                  type={field.type}
+                  value={values[field.name]}
+                  error={errors[field.name]}
+                  required
+                  onChange={handleChange}
+                />
+              )}
+            </div>
+          ))}
+
+          <div className="mt-2 flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
+            <Button to="/eventos" variant="secondary">
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Guardando…' : 'Guardar'}
+            </Button>
           </div>
-        ))}
-
-        <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
-          <Link to="/eventos" className="rounded border border-slate-300 px-4 py-2 text-center">
-            Cancelar
-          </Link>
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saving ? 'Guardando…' : 'Guardar'}
-          </button>
-        </div>
-      </form>
+        </form>
+      </Card>
     </section>
   );
 }

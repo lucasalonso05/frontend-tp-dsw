@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import Alert from '../components/Alert';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import Loading from '../components/Loading';
+import PageHeader from '../components/PageHeader';
 import TextField from '../components/TextField';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import { entryService } from '../services/entryService';
 import { eventService } from '../services/eventService';
 import type { CreateEntryDTO, Entry } from '../types/entry';
@@ -108,6 +114,7 @@ function EntryFormPage() {
   const params = useParams();
   const eventId = Number(params.id);
   const { user } = useAuth();
+  const { showToast } = useToast();
   const entryId = params.entryId === undefined ? null : Number(params.entryId);
   const navigate = useNavigate();
   const listPath = `/eventos/${eventId}/entradas`;
@@ -185,6 +192,7 @@ function EntryFormPage() {
       } else {
         await entryService.update(entryId, dto);
       }
+      showToast(entryId === null ? 'Entrada creada' : 'Cambios guardados');
       navigate(listPath);
     } catch (err) {
       setApiError((err as Error).message);
@@ -192,74 +200,65 @@ function EntryFormPage() {
     }
   };
 
-  if (loading) return <p className="text-slate-600">Cargando…</p>;
+  if (loading) return <Loading />;
 
   // Un organizador no puede gestionar las entradas del evento de otro.
   if (event && !canManage(user, event.id_user)) return <ForbiddenPage />;
 
   if (!event || (entryId !== null && !current)) {
     return (
-      <section className="mx-auto max-w-2xl">
-        <p role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {apiError ?? 'No se pudo cargar la entrada'}
-        </p>
-        <Link to="/eventos" className="mt-4 inline-block text-blue-600 hover:underline">
-          ← Volver a eventos
-        </Link>
+      <section className="mx-auto max-w-2xl space-y-6">
+        <Alert>{apiError ?? 'No se pudo cargar la entrada'}</Alert>
+        <Button to="/eventos" variant="secondary">
+          Volver a eventos
+        </Button>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold md:text-3xl">
-        {entryId === null ? 'Nueva entrada' : 'Editar entrada'}
-      </h1>
-      <p className="mt-1 text-slate-600">
-        {event.title} · {Math.max(unassigned, 0)} lugares sin asignar
-      </p>
 
-      {apiError && (
-        <p role="alert" className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {apiError}
-        </p>
-      )}
+    <section className="mx-auto max-w-2xl space-y-6">
+      <PageHeader
+        title={entryId === null ? 'Nueva entrada' : 'Editar entrada'}
+        description={`${event.title} · ${Math.max(unassigned, 0)} lugares sin asignar`}
+      />
 
-      <form
-        noValidate
-        className="mt-6 grid gap-4 sm:grid-cols-2"
-        onSubmit={(submitEvent) => {
-          submitEvent.preventDefault();
-          save();
-        }}
-      >
-        {fields.map((field) => (
-          <div key={field.name} className={field.wide ? 'sm:col-span-2' : undefined}>
-            <TextField
-              label={field.label}
-              name={field.name}
-              type={field.type}
-              value={values[field.name]}
-              error={errors[field.name]}
-              required={!field.optional}
-              onChange={handleChange}
-            />
+      {apiError && <Alert>{apiError}</Alert>}
+
+      <Card className="sm:p-6">
+        <form
+          noValidate
+          className="grid gap-4 sm:grid-cols-2"
+          onSubmit={(submitEvent) => {
+            submitEvent.preventDefault();
+            save();
+          }}
+        >
+          {fields.map((field) => (
+            <div key={field.name} className={field.wide ? 'sm:col-span-2' : undefined}>
+              <TextField
+                label={field.label}
+                name={field.name}
+                type={field.type}
+                value={values[field.name]}
+                error={errors[field.name]}
+                required={!field.optional}
+                onChange={handleChange}
+              />
+            </div>
+          ))}
+
+          <div className="mt-2 flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
+            <Button to={listPath} variant="secondary">
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Guardando…' : 'Guardar'}
+            </Button>
           </div>
-        ))}
-
-        <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
-          <Link to={listPath} className="rounded border border-slate-300 px-4 py-2 text-center">
-            Cancelar
-          </Link>
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saving ? 'Guardando…' : 'Guardar'}
-          </button>
-        </div>
-      </form>
+        </form>
+      </Card>
     </section>
   );
 }

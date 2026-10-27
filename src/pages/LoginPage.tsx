@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Alert from '../components/Alert';
+import Button from '../components/Button';
+import Card from '../components/Card';
 import TextField from '../components/TextField';
 import { useAuth } from '../hooks/useAuth';
 
@@ -36,51 +39,49 @@ function LoginPage() {
   };
 
   return (
-    <section className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-bold md:text-3xl">Iniciar sesión</h1>
+    <section className="mx-auto max-w-md md:mt-8">
+      <Card className="space-y-6 sm:p-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold">Iniciar sesión</h1>
+          <p className="mt-1 text-slate-600">Ingresá para comprar entradas o gestionar tus eventos.</p>
+        </div>
 
-      {error && (
-        <p role="alert" className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {error}
-        </p>
-      )}
+        {error && <Alert>{error}</Alert>}
 
-      <form
-        noValidate
-        className="mt-6 space-y-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-      >
-        <TextField
-          label="Email"
-          name="email"
-          type="email"
-          value={values.email}
-          onChange={handleChange}
-        />
-        <TextField
-          label="Contraseña"
-          name="password"
-          type="password"
-          value={values.password}
-          onChange={handleChange}
-        />
-        <button
-          type="submit"
-          disabled={sending}
-          className="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+        <form
+          noValidate
+          className="space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit();
+          }}
         >
-          {sending ? 'Ingresando…' : 'Ingresar'}
-        </button>
-      </form>
-      <p className="mt-4 text-center text-sm text-slate-600">
-        ¿No tenés cuenta?{' '}
-        <Link to="/registrarse" className="text-blue-600 hover:underline">
-          Registrate
-        </Link>
-      </p>
+          <TextField
+            label="Email"
+            name="email"
+            type="email"
+            value={values.email}
+            onChange={handleChange}
+          />
+          <TextField
+            label="Contraseña"
+            name="password"
+            type="password"
+            value={values.password}
+            onChange={handleChange}
+          />
+          <Button type="submit" disabled={sending} fullWidth>
+            {sending ? 'Ingresando…' : 'Ingresar'}
+          </Button>
+        </form>
+
+        <p className="text-center text-sm text-slate-600">
+          ¿No tenés cuenta?{' '}
+          <Link to="/registrarse" className="font-medium text-blue-800 underline hover:text-blue-900">
+            Registrate
+          </Link>
+        </p>
+      </Card>
     </section>
   );
 }
