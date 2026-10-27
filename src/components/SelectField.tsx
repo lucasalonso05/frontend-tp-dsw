@@ -1,3 +1,5 @@
+import { fieldClasses } from '../utils/styles';
+
 interface SelectFieldProps {
   label: string;
   name: string;
@@ -23,7 +25,7 @@ function SelectField({
     <div>
       <label htmlFor={name} className="block text-sm font-medium text-slate-700">
         {label}
-        {required && <span className="text-red-600"> *</span>}
+        {required && <span className="text-red-700"> *</span>}
       </label>
       <select
         id={name}
@@ -31,7 +33,8 @@ function SelectField({
         value={value}
         onChange={(event) => onChange(name, event.target.value)}
         aria-invalid={error !== undefined}
-        className={`mt-1 w-full rounded border bg-white px-3 py-2 ${error ? 'border-red-500' : 'border-slate-300'}`}
+        aria-describedby={error ? `${name}-error` : undefined}
+        className={fieldClasses(error !== undefined)}
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((option) => (
@@ -40,7 +43,11 @@ function SelectField({
           </option>
         ))}
       </select>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && (
+        <p id={`${name}-error`} className="mt-1 text-sm text-red-700">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,10 +1,13 @@
 import { EVENT_STATUS_LABELS } from '../types/event';
 import type { EventStatus } from '../types/event';
+import Badge from './Badge';
+import type { BadgeTone } from './Badge';
 
-const statusClasses: Record<EventStatus, string> = {
-  CONFIRMED: 'bg-green-100 text-green-800',
-  FINISHED: 'bg-slate-200 text-slate-700',
-  CANCELLED: 'bg-red-100 text-red-800',
+// Verde = activo, gris = finalizado, rojo = cancelado.
+const statusTones: Record<EventStatus, BadgeTone> = {
+  CONFIRMED: 'green',
+  FINISHED: 'slate',
+  CANCELLED: 'red',
 };
 
 interface EventStatusBadgeProps {
@@ -12,11 +15,7 @@ interface EventStatusBadgeProps {
 }
 
 function EventStatusBadge({ status }: EventStatusBadgeProps) {
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-xs ${statusClasses[status]}`}>
-      {EVENT_STATUS_LABELS[status]}
-    </span>
-  );
+  return <Badge tone={statusTones[status]}>{EVENT_STATUS_LABELS[status]}</Badge>;
 }
 
 export default EventStatusBadge;
