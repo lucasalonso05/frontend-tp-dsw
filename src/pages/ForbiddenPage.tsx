@@ -1,19 +1,18 @@
-import { Link } from 'react-router-dom';
+import { ShieldX } from 'lucide-react';
+import Button from '../components/Button';
 
 function ForbiddenPage() {
   return (
-    <section className="py-12 text-center">
-      <h1 className="text-2xl font-bold">No tenés permiso para ver esta página</h1>
-      <p className="mt-2 text-slate-600">
+    <section className="flex flex-col items-center py-16 text-center">
+      <ShieldX className="size-12 text-slate-400" />
+      <h1 className="mt-4 text-2xl font-semibold">No tenés permiso para ver esta página</h1>
+      <p className="mt-2 max-w-md text-slate-600">
         Esta sección es para otro tipo de usuario. Si tenés otra cuenta, cerrá sesión e ingresá con
         esa.
       </p>
-      <Link
-        to="/"
-        className="mt-6 inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-      >
-        Volver a la cartelera
-      </Link>
+      <div className="mt-6">
+        <Button to="/">Volver a la cartelera</Button>
+      </div>
     </section>
   );
 }

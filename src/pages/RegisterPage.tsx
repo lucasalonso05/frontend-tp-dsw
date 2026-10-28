@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Alert from '../components/Alert';
+import Button from '../components/Button';
+import Card from '../components/Card';
 import SelectField from '../components/SelectField';
 import TextField from '../components/TextField';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import { userService } from '../services/userService';
 
 interface RegisterValues {
@@ -87,6 +91,7 @@ function validate(values: RegisterValues): RegisterErrors {
 function RegisterPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [values, setValues] = useState<RegisterValues>(emptyValues);
   const [errors, setErrors] = useState<RegisterErrors>({});
@@ -117,6 +122,7 @@ function RegisterPage() {
       });
       // Con la cuenta creada, inicia sesión directamente.
       await login(values.email.trim(), values.password);
+      showToast(`Hola, ${values.name.trim()}. Tu cuenta quedó creada.`);
       navigate('/', { replace: true });
     } catch (err) {
       setApiError((err as Error).message);
@@ -125,64 +131,61 @@ function RegisterPage() {
   };
 
   return (
-    <section className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold md:text-3xl">Crear cuenta</h1>
-      <p className="mt-1 text-slate-600">Con tu cuenta vas a poder comprar entradas.</p>
-
-      {apiError && (
-        <p role="alert" className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {apiError}
-        </p>
-      )}
-
-      <form
-        noValidate
-        className="mt-6 grid gap-4 sm:grid-cols-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-      >
-        {fields.map((field) => (field.options ? (
-          <SelectField
-            key={field.name}
-            label={field.label}
-            name={field.name}
-            value={values[field.name]}
-            options={field.options}
-            error={errors[field.name]}
-            required
-            onChange={handleChange}
-          />
-        ) : (
-          <TextField
-            key={field.name}
-            label={field.label}
-            name={field.name}
-            type={field.type}
-            value={values[field.name]}
-            error={errors[field.name]}
-            required
-            onChange={handleChange}
-          />
-        )))}
-
-        <div className="flex flex-col gap-3 sm:col-span-2">
-          <button
-            type="submit"
-            disabled={sending}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {sending ? 'Creando cuenta…' : 'Crear cuenta'}
-          </button>
-          <p className="text-center text-sm text-slate-600">
-            ¿Ya tenés cuenta?{' '}
-            <Link to="/ingresar" className="text-blue-600 hover:underline">
-              Ingresá
-            </Link>
-          </p>
+    <section className="mx-auto max-w-2xl md:mt-4">
+      <Card className="space-y-6 sm:p-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold">Crear cuenta</h1>
+          <p className="mt-1 text-slate-600">Con tu cuenta vas a poder comprar entradas.</p>
         </div>
-      </form>
+
+        {apiError && <Alert>{apiError}</Alert>}
+
+        <form
+          noValidate
+          className="grid gap-4 sm:grid-cols-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit();
+          }}
+        >
+          {fields.map((field) => (field.options ? (
+            <SelectField
+              key={field.name}
+              label={field.label}
+              name={field.name}
+              value={values[field.name]}
+              options={field.options}
+              error={errors[field.name]}
+              required
+              onChange={handleChange}
+            />
+          ) : (
+            <TextField
+              key={field.name}
+              label={field.label}
+              name={field.name}
+              type={field.type}
+              value={values[field.name]}
+              error={errors[field.name]}
+              required
+              onChange={handleChange}
+            />
+          )))}
+
+          <div className="mt-2 sm:col-span-2">
+            <Button type="submit" disabled={sending} fullWidth>
+              {sending ? 'Creando cuenta…' : 'Crear cuenta'}
+            </Button>
+          </div>
+        </form>
+
+        <p className="text-center text-sm text-slate-600">
+          ¿Ya tenés cuenta?{' '}
+          <Link to="/ingresar" className="font-medium text-blue-800 underline hover:text-blue-900">
+            Ingresá
+          </Link>
+        </p>
+      </Card>
     </section>
   );
 }

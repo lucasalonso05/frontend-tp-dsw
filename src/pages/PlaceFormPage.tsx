@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import Alert from '../components/Alert';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import Loading from '../components/Loading';
+import PageHeader from '../components/PageHeader';
 import SelectField from '../components/SelectField';
 import TextField from '../components/TextField';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import { placeService } from '../services/placeService';
 import { userService } from '../services/userService';
 import type { CreatePlaceDTO } from '../types/place';
@@ -106,6 +112,7 @@ function PlaceFormPage() {
   const placeId = id === undefined ? null : Number(id);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const isAdmin = user?.role === 'ADMIN';
 
   const [values, setValues] = useState<PlaceFormValues>(emptyValues);
@@ -171,6 +178,7 @@ function PlaceFormPage() {
       } else {
         await placeService.update(placeId, toDTO(values, isAdmin));
       }
+      showToast(placeId === null ? 'Lugar creado' : 'Cambios guardados');
       navigate('/lugares');
     } catch (err) {
       setApiError((err as Error).message);
@@ -178,76 +186,69 @@ function PlaceFormPage() {
     }
   };
 
-  if (loading) return <p className="text-slate-600">Cargando…</p>;
+  if (loading) return <Loading />;
 
   // Un organizador no puede editar el lugar de otro.
   if (ownerId !== null && !canManage(user, ownerId)) return <ForbiddenPage />;
 
   return (
-    <section className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold md:text-3xl">
-        {placeId === null ? 'Nuevo lugar' : 'Editar lugar'}
-      </h1>
 
-      {apiError && (
-        <p role="alert" className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {apiError}
-        </p>
-      )}
+    <section className="mx-auto max-w-2xl space-y-6">
+      <PageHeader title={placeId === null ? 'Nuevo lugar' : 'Editar lugar'} />
 
-      <form
-        noValidate
-        className="mt-6 grid gap-4 sm:grid-cols-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          save();
-        }}
-      >
-        {fields.map((field) => (
-          <div key={field.name} className={field.wide ? 'sm:col-span-2' : undefined}>
-            <TextField
-              label={field.label}
-              name={field.name}
-              type={field.type}
-              value={values[field.name]}
-              error={errors[field.name]}
-              required={!field.optional}
-              onChange={handleChange}
-            />
+      {apiError && <Alert>{apiError}</Alert>}
+
+      <Card className="sm:p-6">
+        <form
+          noValidate
+          className="grid gap-4 sm:grid-cols-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            save();
+          }}
+        >
+          {fields.map((field) => (
+            <div key={field.name} className={field.wide ? 'sm:col-span-2' : undefined}>
+              <TextField
+                label={field.label}
+                name={field.name}
+                type={field.type}
+                value={values[field.name]}
+                error={errors[field.name]}
+                required={!field.optional}
+                onChange={handleChange}
+              />
+            </div>
+          ))}
+
+          {isAdmin && (
+            <div className="sm:col-span-2">
+              <SelectField
+                label="Organizador"
+                name="id_user"
+                value={values.id_user}
+                placeholder="Elegí un organizador"
+                options={organisers.map((item) => ({
+                  value: String(item.id),
+                  label: `${item.name} ${item.surname}`,
+                }))}
+                error={errors.id_user}
+                required
+                onChange={handleChange}
+              />
+            </div>
+          )}
+
+          <div className="mt-2 flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
+            <Button to="/lugares" variant="secondary">
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Guardando…' : 'Guardar'}
+            </Button>
           </div>
-        ))}
-
-        {isAdmin && (
-          <div className="sm:col-span-2">
-            <SelectField
-              label="Organizador"
-              name="id_user"
-              value={values.id_user}
-              placeholder="Elegí un organizador"
-              options={organisers.map((item) => ({
-                value: String(item.id),
-                label: `${item.name} ${item.surname}`,
-              }))}
-              error={errors.id_user}
-              required
-              onChange={handleChange}
-            />
-          </div>
-        )}
-
-        <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
-          <Link to="/lugares" className="rounded border border-slate-300 px-4 py-2 text-center">
-            Cancelar
-          </Link>
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saving ? 'Guardando…' : 'Guardar'}
-          </button>
-        </div>
-      </form>
+        </form>
+      </Card>
     </section>
   );
 }

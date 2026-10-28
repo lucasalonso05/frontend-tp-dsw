@@ -1,6 +1,12 @@
+import { CalendarDays, MapPin, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import Alert from '../components/Alert';
+import Button from '../components/Button';
+import Card from '../components/Card';
 import EventStatusBadge from '../components/EventStatusBadge';
+import Loading from '../components/Loading';
+import PageHeader from '../components/PageHeader';
 import { entryService } from '../services/entryService';
 import { eventService } from '../services/eventService';
 import { placeService } from '../services/placeService';
@@ -52,17 +58,15 @@ function EventDetailPage() {
     };
   }, [eventId]);
 
-  if (loading) return <p className="text-slate-600">Cargando evento…</p>;
+  if (loading) return <Loading label="Cargando evento…" />;
 
   if (!detail) {
     return (
-      <section>
-        <p role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {error ?? 'No se pudo cargar el evento'}
-        </p>
-        <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline">
-          ← Volver a la cartelera
-        </Link>
+      <section className="space-y-6">
+        <Alert>{error ?? 'No se pudo cargar el evento'}</Alert>
+        <Button to="/" variant="secondary">
+          Volver a la cartelera
+        </Button>
       </section>
     );
   }
@@ -71,51 +75,57 @@ function EventDetailPage() {
   const sortedEntries = [...entries].sort((a, b) => Number(a.unit_price) - Number(b.unit_price));
 
   return (
-    <section>
-      <Link to="/" className="text-sm text-blue-600 hover:underline">
-        ← Volver a la cartelera
-      </Link>
-
-      <div className="mt-2 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold md:text-3xl">{event.title}</h1>
-        <EventStatusBadge status={event.status} />
-      </div>
-      <p className="text-slate-600">{event.category}</p>
+    <section className="space-y-6">
+      <PageHeader
+        title={event.title}
+        description={event.category}
+        badge={<EventStatusBadge status={event.status} />}
+        back={{ to: '/', label: 'Volver a la cartelera' }}
+      />
 
       {event.status === 'CANCELLED' && (
-        <p role="alert" className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
+        <Alert>
           Este evento fue cancelado
           {event.date_time_cancellation
             ? ` el ${formatDateTime(event.date_time_cancellation)}`
             : ''}
           .
-        </p>
+        </Alert>
       )}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="font-semibold">Cuándo</h2>
+          <Card>
+            <h2 className="flex items-center gap-2 font-semibold">
+              <CalendarDays className="size-4 text-slate-500" />
+              Cuándo
+            </h2>
             <p className="mt-1 text-sm">Empieza: {formatDateTime(event.date_time_start)}</p>
             <p className="text-sm">Termina: {formatDateTime(event.date_time_end)}</p>
-          </div>
+          </Card>
 
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="font-semibold">Dónde</h2>
+          <Card>
+            <h2 className="flex items-center gap-2 font-semibold">
+              <MapPin className="size-4 text-slate-500" />
+              Dónde
+            </h2>
             <p className="mt-1 text-sm">{place.name}</p>
             <p className="text-sm text-slate-600">
               {place.street} {place.street_number}, {place.city}, {place.province}
             </p>
             <p className="text-sm text-slate-600">Capacidad: {place.capacity} personas</p>
             {place.description && <p className="mt-2 text-sm">{place.description}</p>}
-          </div>
+          </Card>
 
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="font-semibold">Organiza</h2>
+          <Card>
+            <h2 className="flex items-center gap-2 font-semibold">
+              <UserRound className="size-4 text-slate-500" />
+              Organiza
+            </h2>
             <p className="mt-1 text-sm">
               {event.FK_user.name} {event.FK_user.surname}
             </p>
-          </div>
+          </Card>
         </div>
 
         <div className="lg:col-span-2">
@@ -130,26 +140,27 @@ function EventDetailPage() {
               const available = entry.stock - entry.sold_stock;
 
               return (
-                <li
-                  key={entry.id}
-                  className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <h3 className="font-semibold">{entry.entry_name}</h3>
-                    {entry.entry_description && (
-                      <p className="text-sm text-slate-600">{entry.entry_description}</p>
-                    )}
-                    <p className="text-sm text-slate-600">
-                      {formatDateTime(entry.date_time_start)} a{' '}
-                      {formatDateTime(entry.date_time_end)}
-                    </p>
-                  </div>
-                  <div className="sm:text-right">
-                    <p className="text-lg font-semibold">{formatPrice(entry.unit_price)}</p>
-                    <p className={`text-sm ${available > 0 ? 'text-slate-600' : 'text-red-700'}`}>
-                      {available > 0 ? `${available} disponibles` : 'Agotada'}
-                    </p>
-                  </div>
+                <li key={entry.id}>
+                  <Card className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="font-semibold">{entry.entry_name}</h3>
+                      {entry.entry_description && (
+                        <p className="text-sm text-slate-600">{entry.entry_description}</p>
+                      )}
+                      <p className="text-sm text-slate-600">
+                        {formatDateTime(entry.date_time_start)} a{' '}
+                        {formatDateTime(entry.date_time_end)}
+                      </p>
+                    </div>
+                    <div className="sm:text-right">
+                      <p className="text-lg font-semibold tabular-nums">
+                        {formatPrice(entry.unit_price)}
+                      </p>
+                      <p className={`text-sm ${available > 0 ? 'text-slate-600' : 'text-red-700'}`}>
+                        {available > 0 ? `${available} disponibles` : 'Agotada'}
+                      </p>
+                    </div>
+                  </Card>
                 </li>
               );
             })}

@@ -1,3 +1,5 @@
+import { fieldClasses } from '../utils/styles';
+
 interface TextFieldProps {
   label: string;
   name: string;
@@ -21,7 +23,7 @@ function TextField({
     <div>
       <label htmlFor={name} className="block text-sm font-medium text-slate-700">
         {label}
-        {required && <span className="text-red-600"> *</span>}
+        {required && <span className="text-red-700"> *</span>}
       </label>
       <input
         id={name}
@@ -31,10 +33,10 @@ function TextField({
         onChange={(event) => onChange(name, event.target.value)}
         aria-invalid={error !== undefined}
         aria-describedby={error ? `${name}-error` : undefined}
-        className={`mt-1 w-full rounded border px-3 py-2 ${error ? 'border-red-500' : 'border-slate-300'}`}
+        className={fieldClasses(error !== undefined)}
       />
       {error && (
-        <p id={`${name}-error`} className="mt-1 text-sm text-red-600">
+        <p id={`${name}-error`} className="mt-1 text-sm text-red-700">
           {error}
         </p>
       )}

@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import Alert from '../components/Alert';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import Loading from '../components/Loading';
+import PageHeader from '../components/PageHeader';
 import SelectField from '../components/SelectField';
 import TextField from '../components/TextField';
+import { useToast } from '../hooks/useToast';
 import { userService } from '../services/userService';
 import { USER_ROLE_LABELS } from '../types/user';
 import type { CreateUserDTO, UserRole } from '../types/user';
@@ -116,6 +122,7 @@ function UserFormPage() {
   const userId = id === undefined ? null : Number(id);
   const isEdit = userId !== null;
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [values, setValues] = useState<UserFormValues>(emptyValues);
   const [errors, setErrors] = useState<UserFormErrors>({});
@@ -177,6 +184,7 @@ function UserFormPage() {
           values.password === '' ? dto : { ...dto, password: values.password },
         );
       }
+      showToast(userId === null ? 'Persona creada' : 'Cambios guardados');
       navigate('/personas');
     } catch (err) {
       setApiError((err as Error).message);
@@ -184,77 +192,70 @@ function UserFormPage() {
     }
   };
 
-  if (loading) return <p className="text-slate-600">Cargando…</p>;
+  if (loading) return <Loading />;
 
   return (
-    <section className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold md:text-3xl">
-        {isEdit ? 'Editar persona' : 'Nueva persona'}
-      </h1>
 
-      {apiError && (
-        <p role="alert" className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {apiError}
-        </p>
-      )}
+    <section className="mx-auto max-w-2xl space-y-6">
+      <PageHeader title={isEdit ? 'Editar persona' : 'Nueva persona'} />
 
-      <form
-        noValidate
-        className="mt-6 grid gap-4 sm:grid-cols-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          save();
-        }}
-      >
-        {fields.map((field) => (field.options ? (
-          <SelectField
-            key={field.name}
-            label={field.label}
-            name={field.name}
-            value={values[field.name]}
-            options={field.options}
-            error={errors[field.name]}
-            required
-            onChange={handleChange}
-          />
-        ) : (
-          <TextField
-            key={field.name}
-            label={field.label}
-            name={field.name}
-            type={field.type}
-            value={values[field.name]}
-            error={errors[field.name]}
-            required={!field.optional}
-            onChange={handleChange}
-          />
-        )))}
+      {apiError && <Alert>{apiError}</Alert>}
 
-        <div className="sm:col-span-2">
-          <TextField
-            label={isEdit ? 'Nueva contraseña (dejala vacía para no cambiarla)' : 'Contraseña'}
-            name="password"
-            type="password"
-            value={values.password}
-            error={errors.password}
-            required={!isEdit}
-            onChange={handleChange}
-          />
-        </div>
+      <Card className="sm:p-6">
+        <form
+          noValidate
+          className="grid gap-4 sm:grid-cols-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            save();
+          }}
+        >
+          {fields.map((field) => (field.options ? (
+            <SelectField
+              key={field.name}
+              label={field.label}
+              name={field.name}
+              value={values[field.name]}
+              options={field.options}
+              error={errors[field.name]}
+              required
+              onChange={handleChange}
+            />
+          ) : (
+            <TextField
+              key={field.name}
+              label={field.label}
+              name={field.name}
+              type={field.type}
+              value={values[field.name]}
+              error={errors[field.name]}
+              required={!field.optional}
+              onChange={handleChange}
+            />
+          )))}
 
-        <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
-          <Link to="/personas" className="rounded border border-slate-300 px-4 py-2 text-center">
-            Cancelar
-          </Link>
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saving ? 'Guardando…' : 'Guardar'}
-          </button>
-        </div>
-      </form>
+          <div className="sm:col-span-2">
+            <TextField
+              label={isEdit ? 'Nueva contraseña (dejala vacía para no cambiarla)' : 'Contraseña'}
+              name="password"
+              type="password"
+              value={values.password}
+              error={errors.password}
+              required={!isEdit}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="mt-2 flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
+            <Button to="/personas" variant="secondary">
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Guardando…' : 'Guardar'}
+            </Button>
+          </div>
+        </form>
+      </Card>
     </section>
   );
 }
