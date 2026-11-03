@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
-  CalendarCog, CalendarDays, LogOut, MapPin, Menu, Ticket, Users, X,
+  CalendarCog, CalendarDays, LogOut, MapPin, Menu, Tags, Ticket, Users, X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -25,6 +25,9 @@ const links: NavItem[] = [
   },
   {
     to: '/lugares', label: 'Lugares', icon: MapPin, roles: ['ORGANISER', 'ADMIN'],
+  },
+  {
+    to: '/categorias', label: 'Categorías', icon: Tags, roles: ['ADMIN'],
   },
   {
     to: '/personas', label: 'Personas', icon: Users, roles: ['ADMIN'],

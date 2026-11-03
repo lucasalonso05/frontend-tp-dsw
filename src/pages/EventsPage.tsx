@@ -95,7 +95,7 @@ function EventsPage() {
                 <h2 className="font-semibold">{event.title}</h2>
                 <EventStatusBadge status={event.status} />
               </div>
-              <p className="text-sm text-slate-600">{event.category}</p>
+              <p className="text-sm text-slate-600">{event.FK_category.name}</p>
               <p className="mt-2 text-sm">
                 {formatDateTime(event.date_time_start)} a {formatDateTime(event.date_time_end)}
               </p>
