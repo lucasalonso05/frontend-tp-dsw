@@ -1,6 +1,8 @@
 import { Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import CategoriesPage from './pages/CategoriesPage';
+import CategoryFormPage from './pages/CategoryFormPage';
 import EntriesPage from './pages/EntriesPage';
 import EntryFormPage from './pages/EntryFormPage';
 import EventDetailPage from './pages/EventDetailPage';
@@ -40,6 +42,9 @@ function App() {
 
         {/* Solo admins */}
         <Route element={<ProtectedRoute roles={['ADMIN']} />}>
+          <Route path="/categorias" element={<CategoriesPage />} />
+          <Route path="/categorias/nueva" element={<CategoryFormPage />} />
+          <Route path="/categorias/:id/editar" element={<CategoryFormPage />} />
           <Route path="/personas" element={<UsersPage />} />
           <Route path="/personas/nueva" element={<UserFormPage />} />
           <Route path="/personas/:id/editar" element={<UserFormPage />} />

@@ -9,20 +9,25 @@ import SelectField from '../components/SelectField';
 import TextField from '../components/TextField';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
+import { categoryService } from '../services/categoryService';
 import { eventService } from '../services/eventService';
 import { placeService } from '../services/placeService';
 import { userService } from '../services/userService';
+import type { Category } from '../types/category';
 import { EVENT_STATUS_LABELS } from '../types/event';
 import type { CreateEventDTO, EventModel, EventStatus } from '../types/event';
 import type { Place } from '../types/place';
 import type { User } from '../types/user';
+import { findCategoryByName } from '../utils/categories';
 import { toDateTimeInput, toISO } from '../utils/dates';
 import { canManage } from '../utils/permissions';
 import ForbiddenPage from './ForbiddenPage';
 
 interface EventFormValues {
   title: string;
-  category: string;
+  id_category: string;
+  /** Solo se usa cuando en el desplegable se eligió "Otra categoría". */
+  new_category: string;
   total_stock: string;
   date_time_start: string;
   date_time_end: string;
@@ -47,9 +52,13 @@ const statusOptions = Object.entries(EVENT_STATUS_LABELS).map(([value, label]) =
   label,
 }));
 
+// Opción del desplegable para cargar una categoría que todavía no está. No es un id posible.
+const NEW_CATEGORY = 'new';
+
 const emptyValues: EventFormValues = {
   title: '',
-  category: '',
+  id_category: '',
+  new_category: '',
   total_stock: '',
   date_time_start: '',
   date_time_end: '',
@@ -62,12 +71,25 @@ function validate(
   values: EventFormValues,
   place: Place | undefined,
   isAdmin: boolean,
+  categories: Category[],
 ): EventFormErrors {
   const errors: EventFormErrors = {};
 
   if (values.title.trim() === '') errors.title = 'Este campo es obligatorio';
-  if (values.category.trim() === '') errors.category = 'Este campo es obligatorio';
   if (values.id_place === '') errors.id_place = 'Elegí un lugar';
+
+  if (values.id_category === '') {
+    errors.id_category = 'Elegí una categoría';
+  } else if (values.id_category === NEW_CATEGORY) {
+    const name = values.new_category.trim();
+    const existing = findCategoryByName(categories, name);
+    if (name === '') {
+      errors.new_category = 'Escribí el nombre de la categoría';
+    } else if (existing) {
+      // Ya está cargada, aunque esté escrita con otras mayúsculas: se usa la que existe.
+      errors.new_category = `Ya existe la categoría "${existing.name}": elegila de la lista`;
+    }
+  }
   // Solo el admin elige organizador; para un organizador, es él mismo.
   if (isAdmin && values.id_user === '') errors.id_user = 'Elegí un organizador';
 
@@ -92,16 +114,17 @@ function toDTO(
   values: EventFormValues,
   original: EventModel | null,
   isAdmin: boolean,
+  id_category: number,
 ): CreateEventDTO {
   const status = values.status as EventStatus;
   const dto: CreateEventDTO = {
     title: values.title.trim(),
-    category: values.category.trim(),
     total_stock: Number(values.total_stock),
     date_time_start: toISO(values.date_time_start),
     date_time_end: toISO(values.date_time_end),
     status,
     id_place: Number(values.id_place),
+    id_category,
   };
 
   // El organizador lo elige solo un admin; si no, el backend usa a quien inició sesión.
@@ -128,6 +151,7 @@ function EventFormPage() {
   const [errors, setErrors] = useState<EventFormErrors>({});
   const [original, setOriginal] = useState<EventModel | null>(null);
   const [places, setPlaces] = useState<Place[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [organisers, setOrganisers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -138,19 +162,22 @@ function EventFormPage() {
 
     Promise.all([
       placeService.getAll(),
+      categoryService.getAll(),
       // La lista de usuarios solo la puede pedir un admin, y solo él la necesita.
       isAdmin ? userService.getAll() : null,
       eventId === null ? null : eventService.getById(eventId),
     ])
-      .then(([placeList, users, event]) => {
+      .then(([placeList, categoryList, users, event]) => {
         if (ignore) return;
         setPlaces(placeList);
+        setCategories(categoryList);
         setOrganisers((users ?? []).filter((item) => item.role === 'ORGANISER'));
         if (event) {
           setOriginal(event);
           setValues({
             title: event.title,
-            category: event.category,
+            id_category: String(event.id_category),
+            new_category: '',
             total_stock: String(event.total_stock),
             date_time_start: toDateTimeInput(event.date_time_start),
             date_time_end: toDateTimeInput(event.date_time_end),
@@ -178,14 +205,19 @@ function EventFormPage() {
 
   const save = async () => {
     const selectedPlace = places.find((place) => place.id === Number(values.id_place));
-    const validationErrors = validate(values, selectedPlace, isAdmin);
+    const validationErrors = validate(values, selectedPlace, isAdmin, categories);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
     setSaving(true);
     setApiError(null);
     try {
-      const dto = toDTO(values, original, isAdmin);
+      // Si eligió "Otra categoría", primero se crea: el evento necesita su id.
+      const categoryId = values.id_category === NEW_CATEGORY
+        ? (await categoryService.create({ name: values.new_category.trim() })).id
+        : Number(values.id_category);
+
+      const dto = toDTO(values, original, isAdmin, categoryId);
       if (eventId === null) {
         await eventService.create(dto);
       } else {
@@ -204,9 +236,23 @@ function EventFormPage() {
   // Un organizador no puede editar el evento de otro.
   if (original && !canManage(user, original.id_user)) return <ForbiddenPage />;
 
+  // Con "Otra categoría" elegida aparece el campo para escribirla, justo debajo.
+  const newCategoryField: FieldConfig[] = values.id_category === NEW_CATEGORY
+    ? [{ name: 'new_category', label: 'Nueva categoría' }]
+    : [];
+
   const fields: FieldConfig[] = [
     { name: 'title', label: 'Título', wide: true },
-    { name: 'category', label: 'Categoría' },
+    {
+      name: 'id_category',
+      label: 'Categoría',
+      placeholder: 'Elegí una categoría',
+      options: [
+        ...categories.map((category) => ({ value: String(category.id), label: category.name })),
+        { value: NEW_CATEGORY, label: 'Otra categoría…' },
+      ],
+    },
+    ...newCategoryField,
     { name: 'total_stock', label: 'Stock total de entradas', type: 'number' },
     { name: 'date_time_start', label: 'Inicio', type: 'datetime-local' },
     { name: 'date_time_end', label: 'Fin', type: 'datetime-local' },

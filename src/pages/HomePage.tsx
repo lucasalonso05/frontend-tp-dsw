@@ -10,9 +10,11 @@ import EventStatusBadge from '../components/EventStatusBadge';
 import PageHeader from '../components/PageHeader';
 import SelectField from '../components/SelectField';
 import TextField from '../components/TextField';
+import { categoryService } from '../services/categoryService';
 import { entryService } from '../services/entryService';
 import { eventService } from '../services/eventService';
 import { placeService } from '../services/placeService';
+import type { Category } from '../types/category';
 import { EVENT_STATUS_LABELS } from '../types/event';
 import { buildCatalog, filterCatalog, uniqueSorted } from '../utils/catalog';
 import type { CatalogFilters, CatalogItem } from '../utils/catalog';
@@ -43,6 +45,7 @@ const orderOptions = [
 
 function HomePage() {
   const [items, setItems] = useState<CatalogItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [filters, setFilters] = useState<CatalogFilters>(initialFilters);
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -51,9 +54,17 @@ function HomePage() {
   useEffect(() => {
     let ignore = false;
 
-    Promise.all([eventService.getAll(), placeService.getAll(), entryService.getAll()])
-      .then(([events, places, entries]) => {
-        if (!ignore) setItems(buildCatalog(events, places, entries));
+    Promise.all([
+      eventService.getAll(),
+      placeService.getAll(),
+      entryService.getAll(),
+      categoryService.getAll(),
+    ])
+      .then(([events, places, entries, categoryList]) => {
+        if (ignore) return;
+        setItems(buildCatalog(events, places, entries));
+        // Salen de su propia tabla: aparecen todas, incluso las que todavía no tienen eventos.
+        setCategories(categoryList);
       })
       .catch((err: Error) => {
         if (!ignore) setError(err.message);
@@ -71,7 +82,6 @@ function HomePage() {
     setFilters({ ...filters, [name]: value });
   };
 
-  const categories = uniqueSorted(items.map((item) => item.event.category));
   const cities = uniqueSorted(items.flatMap((item) => (item.place ? [item.place.city] : [])));
   const visibleItems = filterCatalog(items, filters);
 
@@ -107,7 +117,10 @@ function HomePage() {
           name="category"
           value={filters.category}
           placeholder="Todas"
-          options={categories.map((category) => ({ value: category, label: category }))}
+          options={categories.map((category) => ({
+            value: String(category.id),
+            label: category.name,
+          }))}
           onChange={handleChange}
         />
         <SelectField
@@ -217,7 +230,7 @@ function HomePage() {
                   <h2 className="font-semibold group-hover:text-blue-800">{event.title}</h2>
                   <EventStatusBadge status={event.status} />
                 </div>
-                <p className="text-sm text-slate-600">{event.category}</p>
+                <p className="text-sm text-slate-600">{event.FK_category.name}</p>
                 <p className="mt-2 text-sm">{formatDateTime(event.date_time_start)}</p>
                 <p className="text-sm text-slate-600">
                   {place ? `${place.name}, ${place.city}` : 'Lugar a confirmar'}

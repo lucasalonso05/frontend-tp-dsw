@@ -57,7 +57,8 @@ export function filterCatalog(items: CatalogItem[], filters: CatalogFilters): Ca
 
   const filtered = items.filter(({ event, place, entries }) => {
     if (search !== '' && !event.title.toLowerCase().includes(search)) return false;
-    if (filters.category !== '' && event.category !== filters.category) return false;
+    // La categoría se filtra por id: el desplegable lo guarda como texto, como todo filtro.
+    if (filters.category !== '' && String(event.id_category) !== filters.category) return false;
     if (filters.city !== '' && place?.city !== filters.city) return false;
     if (filters.status !== '' && event.status !== filters.status) return false;
 

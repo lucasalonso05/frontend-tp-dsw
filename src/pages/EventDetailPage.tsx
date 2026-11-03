@@ -78,7 +78,7 @@ function EventDetailPage() {
     <section className="space-y-6">
       <PageHeader
         title={event.title}
-        description={event.category}
+        description={event.FK_category.name}
         badge={<EventStatusBadge status={event.status} />}
         back={{ to: '/', label: 'Volver a la cartelera' }}
       />
