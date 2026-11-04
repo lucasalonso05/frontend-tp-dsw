@@ -10,6 +10,7 @@ import EventFormPage from './pages/EventFormPage';
 import EventsPage from './pages/EventsPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
+import MyTicketsPage from './pages/MyTicketsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import PlaceFormPage from './pages/PlaceFormPage';
 import PlacesPage from './pages/PlacesPage';
@@ -26,6 +27,11 @@ function App() {
         <Route path="/eventos/:id" element={<EventDetailPage />} />
         <Route path="/ingresar" element={<LoginPage />} />
         <Route path="/registrarse" element={<RegisterPage />} />
+
+        {/* Cualquiera con sesión */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/mis-entradas" element={<MyTicketsPage />} />
+        </Route>
 
         {/* Organizadores y admins */}
         <Route element={<ProtectedRoute roles={['ORGANISER', 'ADMIN']} />}>
