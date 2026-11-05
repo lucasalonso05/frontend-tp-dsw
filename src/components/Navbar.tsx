@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
-  CalendarCog, CalendarDays, LogOut, MapPin, Menu, Tags, Ticket, Users, X,
+  CalendarCog, CalendarDays, LogOut, MapPin, Menu, Tags, Ticket, Tickets, Users, X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -20,6 +20,10 @@ interface NavItem {
 
 const links: NavItem[] = [
   { to: '/', label: 'Cartelera', icon: CalendarDays },
+  // Con los tres roles lo ve cualquiera que haya iniciado sesión: todos pueden comprar.
+  {
+    to: '/mis-entradas', label: 'Mis entradas', icon: Tickets, roles: ['ASSISTANT', 'ORGANISER', 'ADMIN'],
+  },
   {
     to: '/eventos', label: 'Eventos', icon: CalendarCog, roles: ['ORGANISER', 'ADMIN'],
   },

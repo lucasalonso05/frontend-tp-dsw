@@ -6,6 +6,8 @@ interface ConfirmDialogProps {
   message: string;
   /** Texto del botón que confirma, por ejemplo "Eliminar". */
   confirmLabel: string;
+  /** Color del botón que confirma. Rojo por defecto, para borrar o cancelar. */
+  confirmVariant?: 'danger' | 'primary';
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -15,7 +17,7 @@ interface ConfirmDialogProps {
  * Usa la etiqueta <dialog> de HTML5: bloquea el resto de la página y se cierra con Escape.
  */
 function ConfirmDialog({
-  title, message, confirmLabel, onConfirm, onCancel,
+  title, message, confirmLabel, onConfirm, onCancel, confirmVariant = 'danger',
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -41,7 +43,7 @@ function ConfirmDialog({
         <Button variant="secondary" onClick={onCancel}>
           Volver
         </Button>
-        <Button variant="danger" onClick={onConfirm}>
+        <Button variant={confirmVariant} onClick={onConfirm}>
           {confirmLabel}
         </Button>
       </div>
