@@ -24,3 +24,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Copias del repo que crean las sesiones de Claude Code (git worktrees)
+.claude/worktrees/

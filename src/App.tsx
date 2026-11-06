@@ -17,6 +17,7 @@ import PlacesPage from './pages/PlacesPage';
 import RegisterPage from './pages/RegisterPage';
 import UserFormPage from './pages/UserFormPage';
 import UsersPage from './pages/UsersPage';
+import ScanPage from './pages/ScanPage';
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
           <Route path="/lugares" element={<PlacesPage />} />
           <Route path="/lugares/nuevo" element={<PlaceFormPage />} />
           <Route path="/lugares/:id/editar" element={<PlaceFormPage />} />
+          <Route path="/eventos/:id/escanear" element={<ScanPage />} />
         </Route>
 
         {/* Solo admins */}

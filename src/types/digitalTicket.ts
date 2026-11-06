@@ -17,6 +17,20 @@ export interface DigitalTicket {
   updatedAt: string;
 }
 
+/**
+ * El ticket que devuelve el escaneo cuando el backend lo aprueba:
+ * viene con su titular, su tipo de entrada y su evento, para mostrarlos en la puerta.
+ */
+export interface ScannedTicket extends DigitalTicket {
+  FK_user: { id: number; name: string; surname: string };
+  FK_order_item: {
+    FK_entry: {
+      entry_name: string;
+      FK_event: { id: number; title: string };
+    };
+  };
+}
+
 /** Nombre de cada estado para mostrar en pantalla. */
 export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
   UNSCANNED: 'Sin usar',
