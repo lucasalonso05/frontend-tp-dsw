@@ -17,7 +17,7 @@ import { placeService } from '../services/placeService';
 import type { Category } from '../types/category';
 import { EVENT_STATUS_LABELS } from '../types/event';
 import {
-  buildCatalog, filterCatalog, onlyDigits, uniqueSorted, validateFilters,
+  buildCatalog, cleanPrice, filterCatalog, uniqueSorted, validateFilters,
 } from '../utils/catalog';
 import type { CatalogFilters, CatalogItem } from '../utils/catalog';
 import { formatDateTime } from '../utils/dates';
@@ -85,7 +85,8 @@ function HomePage() {
 
   const handleChange = (name: string, value: string) => {
     // Si alguien escribe "500.000", como se escribe acá, el filtro toma 500000 y no 500.
-    const clean = PRICE_FIELDS.includes(name) ? onlyDigits(value) : value;
+    // Pasadas las 8 cifras, lo que se escribe no entra: ningún precio puede ser tan alto.
+    const clean = PRICE_FIELDS.includes(name) ? cleanPrice(value) : value;
     setFilters({ ...filters, [name]: clean });
   };
 
