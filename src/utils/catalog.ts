@@ -28,6 +28,37 @@ export interface CatalogFilters {
   order: string;
 }
 
+/** Errores de los filtros, por campo. Un campo que no aparece está bien. */
+export type FilterErrors = Partial<Record<'priceMax' | 'dateTo', string>>;
+
+/**
+ * Deja solo los dígitos: "500.000" queda 500000, y el "-" o la "e" no entran.
+ * Para filtrar por precio alcanzan los pesos enteros.
+ */
+export function onlyDigits(value: string): string {
+  return value.replace(/\D/g, '');
+}
+
+/** Revisa que ningún rango esté al revés. El error va en el campo que cierra el rango. */
+export function validateFilters(filters: CatalogFilters): FilterErrors {
+  const errors: FilterErrors = {};
+
+  if (
+    filters.priceMin !== ''
+    && filters.priceMax !== ''
+    && Number(filters.priceMin) > Number(filters.priceMax)
+  ) {
+    errors.priceMax = 'Tiene que ser mayor o igual al mínimo';
+  }
+
+  // Las fechas llegan como AAAA-MM-DD: comparadas como texto, quedan en orden cronológico.
+  if (filters.dateFrom !== '' && filters.dateTo !== '' && filters.dateFrom > filters.dateTo) {
+    errors.dateTo = 'Tiene que ser igual o posterior a "Desde"';
+  }
+
+  return errors;
+}
+
 /** Une cada evento con su lugar y sus entradas. */
 export function buildCatalog(
   events: EventModel[],
@@ -50,10 +81,18 @@ export function buildCatalog(
 }
 
 /** Aplica todos los filtros a la vez y ordena el resultado. */
+/**
+ * Aplica todos los filtros a la vez y ordena el resultado.
+ * Un rango al revés no se aplica: la pantalla muestra el error,
+ * y la lista no queda vacía sin motivo.
+ */
 export function filterCatalog(items: CatalogItem[], filters: CatalogFilters): CatalogItem[] {
+  const errors = validateFilters(filters);
   const search = filters.search.trim().toLowerCase();
-  const priceMin = filters.priceMin === '' ? null : Number(filters.priceMin);
-  const priceMax = filters.priceMax === '' ? null : Number(filters.priceMax);
+  const priceMin = filters.priceMin === '' || errors.priceMax ? null : Number(filters.priceMin);
+  const priceMax = filters.priceMax === '' || errors.priceMax ? null : Number(filters.priceMax);
+  const dateFrom = errors.dateTo ? '' : filters.dateFrom;
+  const dateTo = errors.dateTo ? '' : filters.dateTo;
 
   const filtered = items.filter(({ event, place, entries }) => {
     if (search !== '' && !event.title.toLowerCase().includes(search)) return false;
@@ -64,8 +103,8 @@ export function filterCatalog(items: CatalogItem[], filters: CatalogFilters): Ca
 
     // Día local del evento en formato AAAA-MM-DD, el mismo que entrega <input type="date">.
     const day = toDateTimeInput(event.date_time_start).slice(0, 10);
-    if (filters.dateFrom !== '' && day < filters.dateFrom) return false;
-    if (filters.dateTo !== '' && day > filters.dateTo) return false;
+    if (dateFrom !== '' && day < dateFrom) return false;
+    if (dateTo !== '' && day > dateTo) return false;
 
     if (priceMin !== null || priceMax !== null) {
       const inRange = entries.some((entry) => {
