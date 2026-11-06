@@ -2,6 +2,7 @@ import type { Entry } from '../types/entry';
 import type { EventModel } from '../types/event';
 import type { Place } from '../types/place';
 import { toDateTimeInput } from './dates';
+import { MAX_PRICE_DIGITS } from './money';
 
 /** Un evento con todo lo que la cartelera necesita mostrar y filtrar. */
 export interface CatalogItem {
@@ -37,6 +38,13 @@ export type FilterErrors = Partial<Record<'priceMax' | 'dateTo', string>>;
  */
 export function onlyDigits(value: string): string {
   return value.replace(/\D/g, '');
+}
+/**
+ * Lo que se guarda de un campo de precio: solo dígitos y, como mucho, MAX_PRICE_DIGITS.
+ * Ningún precio puede tener más cifras, así que filtrar por un número más grande no tiene sentido.
+ */
+export function cleanPrice(value: string): string {
+  return onlyDigits(value).slice(0, MAX_PRICE_DIGITS);
 }
 
 /** Revisa que ningún rango esté al revés. El error va en el campo que cierra el rango. */
