@@ -16,7 +16,9 @@ import { eventService } from '../services/eventService';
 import { placeService } from '../services/placeService';
 import type { Category } from '../types/category';
 import { EVENT_STATUS_LABELS } from '../types/event';
-import { buildCatalog, filterCatalog, uniqueSorted } from '../utils/catalog';
+import {
+  buildCatalog, cleanPrice, filterCatalog, uniqueSorted, validateFilters,
+} from '../utils/catalog';
 import type { CatalogFilters, CatalogItem } from '../utils/catalog';
 import { formatDateTime } from '../utils/dates';
 import { formatPrice } from '../utils/money';
@@ -37,6 +39,9 @@ const statusOptions = Object.entries(EVENT_STATUS_LABELS).map(([value, label]) =
   value,
   label,
 }));
+
+// Los campos de precio se quedan solo con los dígitos.
+const PRICE_FIELDS = ['priceMin', 'priceMax'];
 
 const orderOptions = [
   { value: 'date', label: 'Fecha (más próximos primero)' },
@@ -79,10 +84,14 @@ function HomePage() {
   }, []);
 
   const handleChange = (name: string, value: string) => {
-    setFilters({ ...filters, [name]: value });
+    // Si alguien escribe "500.000", como se escribe acá, el filtro toma 500000 y no 500.
+    // Pasadas las 8 cifras, lo que se escribe no entra: ningún precio puede ser tan alto.
+    const clean = PRICE_FIELDS.includes(name) ? cleanPrice(value) : value;
+    setFilters({ ...filters, [name]: clean });
   };
 
   const cities = uniqueSorted(items.flatMap((item) => (item.place ? [item.place.city] : [])));
+  const errors = validateFilters(filters);
   const visibleItems = filterCatalog(items, filters);
 
   return (
@@ -152,19 +161,21 @@ function HomePage() {
           type="date"
           value={filters.dateTo}
           onChange={handleChange}
+          error={errors.dateTo}
         />
         <TextField
           label="Precio mínimo"
           name="priceMin"
-          type="number"
+          inputMode="numeric"
           value={filters.priceMin}
           onChange={handleChange}
         />
         <TextField
           label="Precio máximo"
           name="priceMax"
-          type="number"
+          inputMode="numeric"
           value={filters.priceMax}
+          error={errors.priceMax}
           onChange={handleChange}
         />
         <SelectField
