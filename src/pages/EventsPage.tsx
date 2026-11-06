@@ -113,6 +113,12 @@ function EventsPage() {
                 </Button>
                 <Button to={`/eventos/${event.id}/entradas`} variant="secondary" size="sm">
                   Entradas
+
+                  {event.status === 'CONFIRMED' && (
+                  <Button to={`/eventos/${event.id}/escanear`} variant="secondary" size="sm">
+                    Escanear
+                  </Button>
+                  )}
                 </Button>
                 {event.status !== 'CANCELLED' && (
                   <Button variant="dangerOutline" size="sm" onClick={() => setToCancel(event)}>
