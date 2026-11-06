@@ -5,6 +5,7 @@ import {
   buildCatalog, cleanPrice, filterCatalog, onlyDigits, validateFilters,
 } from './catalog';
 import type { CatalogFilters } from './catalog';
+
 // Filtros vacíos: cada test cambia solo lo que prueba.
 const noFilters: CatalogFilters = {
   search: '',
@@ -50,10 +51,6 @@ describe('onlyDigits', () => {
   });
 });
 
-describe('onlyDigits', () => {
-  // ... sus dos tests, como ya los tenés ...
-});
-
 describe('cleanPrice', () => {
   it('corta en 8 cifras, el precio más alto que guarda la base', () => {
     expect(cleanPrice('1234567890')).toBe('12345678');
@@ -65,7 +62,11 @@ describe('cleanPrice', () => {
 });
 
 describe('validateFilters', () => {
-  // ... sigue igual ...
+  it('acepta un rango de precios en orden, o con un solo extremo', () => {
+    expect(validateFilters({ ...noFilters, priceMin: '100', priceMax: '500' })).toEqual({});
+    expect(validateFilters({ ...noFilters, priceMin: '500', priceMax: '500' })).toEqual({});
+    expect(validateFilters({ ...noFilters, priceMin: '500' })).toEqual({});
+  });
 
   it('marca el precio máximo si es menor que el mínimo', () => {
     expect(validateFilters({ ...noFilters, priceMin: '500', priceMax: '100' })).toEqual({
