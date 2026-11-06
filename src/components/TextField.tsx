@@ -1,3 +1,4 @@
+import type { HTMLAttributes } from 'react';
 import { fieldClasses } from '../utils/styles';
 
 interface TextFieldProps {
@@ -6,6 +7,8 @@ interface TextFieldProps {
   value: string;
   onChange: (name: string, value: string) => void;
   type?: 'text' | 'number' | 'email' | 'password' | 'tel' | 'datetime-local' | 'date';
+  /** Qué teclado muestra el celular. Por ejemplo, 'numeric' para un campo de texto con números. */
+  inputMode?: HTMLAttributes<HTMLInputElement>['inputMode'];
   error?: string;
   required?: boolean;
 }
@@ -16,6 +19,7 @@ function TextField({
   value,
   onChange,
   type = 'text',
+  inputMode,
   error,
   required = false,
 }: TextFieldProps) {
@@ -29,6 +33,7 @@ function TextField({
         id={name}
         name={name}
         type={type}
+        inputMode={inputMode}
         value={value}
         onChange={(event) => onChange(name, event.target.value)}
         aria-invalid={error !== undefined}
