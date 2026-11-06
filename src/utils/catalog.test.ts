@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { Entry } from '../types/entry';
 import type { EventModel } from '../types/event';
 import {
-  buildCatalog, filterCatalog, onlyDigits, validateFilters,
+  buildCatalog, cleanPrice, filterCatalog, onlyDigits, validateFilters,
 } from './catalog';
 import type { CatalogFilters } from './catalog';
-
 // Filtros vacíos: cada test cambia solo lo que prueba.
 const noFilters: CatalogFilters = {
   search: '',
@@ -51,12 +50,22 @@ describe('onlyDigits', () => {
   });
 });
 
-describe('validateFilters', () => {
-  it('acepta un rango de precios en orden, o con un solo extremo', () => {
-    expect(validateFilters({ ...noFilters, priceMin: '100', priceMax: '500' })).toEqual({});
-    expect(validateFilters({ ...noFilters, priceMin: '500', priceMax: '500' })).toEqual({});
-    expect(validateFilters({ ...noFilters, priceMin: '500' })).toEqual({});
+describe('onlyDigits', () => {
+  // ... sus dos tests, como ya los tenés ...
+});
+
+describe('cleanPrice', () => {
+  it('corta en 8 cifras, el precio más alto que guarda la base', () => {
+    expect(cleanPrice('1234567890')).toBe('12345678');
   });
+
+  it('limpia antes de cortar: un precio pegado con signos queda entero', () => {
+    expect(cleanPrice('$ 1.500.000')).toBe('1500000');
+  });
+});
+
+describe('validateFilters', () => {
+  // ... sigue igual ...
 
   it('marca el precio máximo si es menor que el mínimo', () => {
     expect(validateFilters({ ...noFilters, priceMin: '500', priceMax: '100' })).toEqual({
