@@ -13,6 +13,7 @@ import { eventService } from '../services/eventService';
 import type { CreateEntryDTO, Entry } from '../types/entry';
 import type { EventModel } from '../types/event';
 import { toDateTimeInput, toISO } from '../utils/dates';
+import { formatPrice, MAX_PRICE } from '../utils/money';
 import { canManage } from '../utils/permissions';
 import ForbiddenPage from './ForbiddenPage';
 
@@ -37,7 +38,7 @@ interface FieldConfig {
 
 const fields: FieldConfig[] = [
   { name: 'entry_name', label: 'Nombre (por ejemplo General o VIP)', wide: true },
-  { name: 'unit_price', label: 'Precio', type: 'number' },
+  { name: 'unit_price', label: 'Precio (0 si es gratis)', type: 'number' },
   { name: 'stock', label: 'Cantidad disponible', type: 'number' },
   { name: 'date_time_start', label: 'Válida desde', type: 'datetime-local' },
   { name: 'date_time_end', label: 'Válida hasta', type: 'datetime-local' },
@@ -74,9 +75,12 @@ function validate(
     errors.entry_name = 'Ya existe una entrada con ese nombre en este evento';
   }
 
+  // El formato no acepta signo, así que un precio negativo no pasa. 0 es una entrada gratis.
   const validPrice = /^\d+([.,]\d{1,2})?$/.test(values.unit_price.trim());
-  if (!validPrice || toNumber(values.unit_price) <= 0) {
-    errors.unit_price = 'Ingresá un precio mayor a 0, con hasta 2 decimales';
+  if (!validPrice) {
+    errors.unit_price = 'Ingresá un precio de 0 o más, con hasta 2 decimales';
+  } else if (toNumber(values.unit_price) > MAX_PRICE) {
+    errors.unit_price = `El precio no puede superar ${formatPrice(MAX_PRICE)}`;
   }
 
   const stock = Number(values.stock);
